@@ -960,7 +960,7 @@ textarea{resize:vertical;min-height:70px}
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
               <div><label class="lbl">Brand Color (Primary)</label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="admin-color" value="#1C9BD7" style="width:48px;height:38px;padding:2px;border-radius:7px;border:1px solid var(--border);cursor:pointer"/><input type="text" id="admin-color-hex" placeholder="#1C9BD7" style="flex:1;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:monospace" oninput="document.getElementById('admin-color').value=this.value"/></div></div>
-              <div><label class="lbl">Brand Color (Secondary) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— used for header when logo is light/white</span></label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="admin-color2" value="#000000" style="width:48px;height:38px;padding:2px;border-radius:7px;border:1px solid var(--border);cursor:pointer"/><input type="text" id="admin-color2-hex" placeholder="#000000" style="flex:1;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:monospace" oninput="document.getElementById('admin-color2').value=this.value"/></div></div>
+              <div><label class="lbl">Brand Color (Secondary) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— used for header when logo is light/white</span></label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="admin-color2" value="#000000" style="width:48px;height:38px;padding:2px;border-radius:7px;border:1px solid var(--border);cursor:pointer" oninput="document.getElementById('admin-color2-hex').value=this.value"/><input type="text" id="admin-color2-hex" placeholder="Optional — e.g. #000000" style="flex:1;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:monospace" oninput="if(this.value.match(/^#[0-9A-Fa-f]{6}$/))document.getElementById('admin-color2').value=this.value"/></div></div>
             </div>
                 <label class="lbl">Logo URL</label>
                 <input type="text" id="admin-logo" placeholder="https://..." style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px" oninput="updateLogoPreview(this.value)"/>
@@ -1092,7 +1092,7 @@ textarea{resize:vertical;min-height:70px}
 const BASE_URL = "https://io.yourdigitalgroupresources.com";
 const BASE_PORTAL_DOMAIN = "https://review.yourdigitalgroupresources.com";
 const SUPABASE_URL = "https://emydtkhnespbxraiijkx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_cn_m_t2EftUDuph6WtVZRg_PMLIYd9A";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVteWR0a2huZXNwYnhyYWlpamt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTA3NjUsImV4cCI6MjA5MzQ4Njc2NX0.vh_5f19z2cb4_NU0sEKAcPiiNXhQZp-61bBN7lqEKbI";
 const PROXY = SUPABASE_URL + "/functions/v1/claude-proxy";
 
 // ── KOC PRODUCT MAP ───────────────────────────────────────────
@@ -1628,7 +1628,9 @@ let currentHostingPageType = null;
 // ── SUPABASE ─────────────────────────────────────────────────
 async function sb(path, opts={}) {
   const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    headers: {apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: opts.prefer || 'return=representation', ...opts.headers},
+    mode: 'cors',
+    credentials: 'omit',
+    headers: {apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'X-Client-Info': 'supabase-js/2.0.0', Prefer: opts.prefer || 'return=representation', ...opts.headers},
     ...opts
   });
   const t = await res.text();
@@ -2519,7 +2521,7 @@ async function loadGroup() {
   }
 
   try {
-    const results = await sb('groups?io_slug=eq.' + encodeURIComponent(slug) + '&select=*');
+    const results = await sb('groups?io_slug=eq.' + encodeURIComponent(slug) + '&select=id,name,io_slug,am_name,am_email,am_calendar_url,brand_color,brand_color2,logo_url,trello_board_id,trello_email,io_recipient,has_koc,from_name,from_email,io_pricing,portal_domain');
     if (!results || results.length === 0) { showGroupError(); return; }
     selectedGroup = results[0];
     applyGroupBranding(selectedGroup);
@@ -3999,7 +4001,7 @@ function showAdmin(show) {
 
 async function loadAdminGroups() {
   try {
-    allGroups = await sb('groups?order=name&select=*') || [];
+    allGroups = await sb('groups?order=name&select=id,name,io_slug,am_name,am_email,am_calendar_url,brand_color,brand_color2,logo_url,trello_board_id,trello_email,io_recipient,has_koc,from_name,from_email,io_pricing,portal_domain') || [];
     renderAdminGroups();
   } catch(e) {
     showToast('Error loading groups: ' + e.message, 'error');
@@ -4036,7 +4038,7 @@ function renderAdminGroups() {
       return `<tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='var(--light)'" onmouseout="this.style.background=''">
         <td style="padding:12px 14px">
           <div style="display:flex;align-items:center;gap:10px">
-            ${g.logo_url ? `<img src="${g.logo_url}" style="height:28px;width:60px;object-fit:contain;border-radius:4px;border:1px solid var(--border);padding:2px;background:${g.brand_color||'#fff'};flex-shrink:0;filter:${hexLuminance(g.brand_color||'#ffffff')>0.5?'invert(1)':''}" onerror="this.style.display='none'"/>` : `<div style="width:28px;height:28px;border-radius:6px;background:${g.brand_color||'#1C9BD7'};flex-shrink:0"></div>`}
+            ${g.logo_url ? `<img src="${g.logo_url}" style="height:28px;width:60px;object-fit:contain;border-radius:4px;border:1px solid var(--border);padding:2px;background:${g.brand_color2||'#fff'};flex-shrink:0" onerror="this.style.display='none'"/>` : `<div style="width:28px;height:28px;border-radius:6px;background:${g.brand_color||'#1C9BD7'};flex-shrink:0"></div>`}
             <div>
               <div style="font-weight:700;color:var(--text)">${g.name}</div>
               <div style="font-size:10px;color:var(--muted);margin-top:1px">${g.from_email||''}</div>
@@ -4150,7 +4152,7 @@ async function adminSaveGroup() {
     io_slug: slug,
     am_name: document.getElementById('admin-am-name').value.trim(),
     am_email: document.getElementById('admin-am-email').value.trim(),
-    brand_color: document.getElementById('admin-color').value,
+    brand_color: document.getElementById('admin-color-hex').value.trim() || document.getElementById('admin-color').value,
     brand_color2: document.getElementById('admin-color2-hex').value.trim() || null,
     logo_url: document.getElementById('admin-logo').value.trim(),
     trello_board_id: document.getElementById('admin-trello').value.trim(),
