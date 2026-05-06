@@ -740,33 +740,10 @@ textarea{resize:vertical;min-height:70px}
       <div class="card-head"><h3>📅 Kick-Off Call Scheduling</h3></div>
       <div style="padding:18px">
         <div id="koc-products-list" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-          <div>
-            <label class="lbl">KOC Date <span style="color:#EF4444">*</span></label>
-            <input type="date" id="koc-date-step3" onchange="syncKocDate(this.value)"/>
-          </div>
-          <div>
-            <label class="lbl">KOC Time <span style="color:#EF4444">*</span></label>
-            <select id="koc-time-step3" onchange="syncKocTime(this.value)" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px">
-              <option value="">Select time...</option>
-              <option value="07:00">7:00 AM</option><option value="07:30">7:30 AM</option>
-              <option value="08:00">8:00 AM</option><option value="08:30">8:30 AM</option>
-              <option value="09:00">9:00 AM</option><option value="09:30">9:30 AM</option>
-              <option value="10:00">10:00 AM</option><option value="10:30">10:30 AM</option>
-              <option value="11:00">11:00 AM</option><option value="11:30">11:30 AM</option>
-              <option value="12:00">12:00 PM</option><option value="12:30">12:30 PM</option>
-              <option value="13:00">1:00 PM</option><option value="13:30">1:30 PM</option>
-              <option value="14:00">2:00 PM</option><option value="14:30">2:30 PM</option>
-              <option value="15:00">3:00 PM</option><option value="15:30">3:30 PM</option>
-              <option value="16:00">4:00 PM</option><option value="16:30">4:30 PM</option>
-              <option value="17:00">5:00 PM</option>
-            </select>
-          </div>
+        <div id="koc-step3-display">
+          <!-- Populated by updateKocCard() -->
         </div>
-        <div id="koc-am-info" style="font-size:12px;color:var(--muted);padding:10px 12px;background:var(--light);border-radius:7px"></div>
-        <div id="koc-schedule-link" style="margin-top:10px;display:none">
-          <a id="koc-calendar-link" href="#" target="_blank" style="font-size:12px;font-weight:600;color:var(--accent)">📅 Open AM Calendar to Schedule →</a>
-        </div>
+        <div id="koc-am-info" style="font-size:12px;color:var(--muted);padding:10px 12px;background:var(--light);border-radius:7px;margin-top:10px"></div>
       </div>
     </div>
 
@@ -1021,7 +998,7 @@ textarea{resize:vertical;min-height:70px}
         <h3 id="intake-modal-title">Campaign Intake Form</h3>
         <div class="modal-product" id="intake-modal-product"></div>
       </div>
-      <button onclick="closeIntakeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1">✕</button>
+      <button onclick="skipIntakeModal()" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--muted);font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid var(--border)">Skip for now</button>
     </div>
     <div class="modal-body" id="intake-modal-body"></div>
     <div class="modal-footer">
@@ -1039,7 +1016,7 @@ textarea{resize:vertical;min-height:70px}
   <div class="modal-box" style="max-width:480px">
     <div class="modal-header">
       <div><h3>Hosting Setup</h3><div class="modal-product" id="hosting-modal-product"></div></div>
-      <button onclick="closeHostingModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1">✕</button>
+      <button onclick="skipHostingModal()" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--muted);font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid var(--border)">Skip for now</button>
     </div>
     <div class="modal-body">
       <div class="modal-section">
@@ -2082,6 +2059,22 @@ function openKocModal(serviceId) {
   document.getElementById('intake-modal').style.display = 'flex';
 }
 
+function skipIntakeModal() {
+  // Flag this product as skipped — row badge will show Schedule Required
+  const sid = currentIntakeServiceId;
+  if (sid) {
+    const cfg = PRODUCT_CONFIG[sid];
+    showToast(`⚠ ${cfg?.label || 'This product'} needs a KOC scheduled before submission`);
+  }
+  closeIntakeModal();
+}
+
+function skipHostingModal() {
+  // Flag hosting as skipped — row will show no hosting choice
+  showToast('⚠ Hosting not confirmed — required before submission for website products');
+  closeHostingModal();
+}
+
 function addToExistingKoc(formKey) {
   // Mark this form as bypassed and added to the existing KOC
   intakeData[formKey] = { bypassed:true, bypassNote:'Added to existing kick-off call', fields:{} };
@@ -2400,6 +2393,16 @@ function closeIntakeModal() {
 }
 
 // ── KOC CARD ──────────────────────────────────────────────────
+function rescheduleKoc() {
+  // Clear existing schedule so AE books a new one via calendar
+  globalKocSchedule = null;
+  document.getElementById('koc-date').value = '';
+  document.getElementById('koc-time').value = '';
+  updateKocRowBadges();
+  updateKocCard();
+  showToast(`📅 Opening ${selectedGroup?.am_name || 'AM'}'s calendar — book a new time then enter the details in the modal`);
+}
+
 function syncKocDate(val) { document.getElementById('koc-date').value = val; }
 function syncKocTime(val) { document.getElementById('koc-time').value = val; }
 
@@ -2408,23 +2411,46 @@ function updateKocCard() {
   const card = document.getElementById('koc-card');
   if (!kocProducts.length || !selectedGroup?.has_koc) { card.style.display = 'none'; return; }
   card.style.display = 'block';
+
   document.getElementById('koc-products-list').innerHTML =
     `<strong>KOC required for:</strong> ${kocProducts.map(id => PRODUCT_CONFIG[id]?.label||id).join(', ')}`;
+
   const amName = selectedGroup?.am_name || 'your Account Manager';
-  document.getElementById('koc-am-info').textContent =
-    `Kick-off call will be placed on ${amName}'s calendar. An invite will be sent to the client and AE.`;
   const calUrl = selectedGroup?.am_calendar_url;
-  const linkEl = document.getElementById('koc-schedule-link');
-  if (calUrl) {
-    document.getElementById('koc-calendar-link').href = calUrl;
-    linkEl.style.display = 'block';
+  const display = document.getElementById('koc-step3-display');
+  const amInfo = document.getElementById('koc-am-info');
+
+  amInfo.textContent = `Kick-off call will be placed on ${amName}'s calendar. An invite will be sent to the client and AE.`;
+
+  if (globalKocSchedule?.date) {
+    // KOC scheduled — show read-only with reschedule option
+    const [y,m,d] = globalKocSchedule.date.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}${globalKocSchedule.time ? ' · ' + globalKocSchedule.time : ''}`;
+    display.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 18px">
+        <div>
+          <p style="font-size:11px;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📅 Kick-Off Call Scheduled</p>
+          <p style="font-size:16px;font-weight:700;color:#1E40AF;margin:0">${pretty} with ${amName}</p>
+        </div>
+        ${calUrl ? `<a href="${calUrl}" target="_blank" onmousedown="rescheduleKoc()"
+          style="font-size:12px;font-weight:600;color:#3B82F6;text-decoration:none;white-space:nowrap;padding:6px 12px;border:1px solid #BFDBFE;border-radius:7px;background:#fff">
+          🔄 Reschedule →
+        </a>` : ''}
+      </div>`;
   } else {
-    linkEl.style.display = 'none';
+    // Not yet scheduled
+    display.innerHTML = `
+      <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:16px;text-align:center">
+        <p style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:8px">⚠ Kick-Off Call Not Yet Scheduled</p>
+        <p style="font-size:12px;color:#92400E;margin-bottom:14px">You must schedule a KOC with ${amName} before submitting.</p>
+        ${calUrl ? `<a href="${calUrl}" target="_blank"
+          onmousedown="openKocModal(Object.keys(selected).find(id=>PRODUCT_CONFIG[id]?.koc==='required'))"
+          style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--accent);color:#fff;border-radius:20px;font-size:13px;font-weight:700;text-decoration:none">
+          📅 Open ${amName}'s Calendar →
+        </a>` : `<p style="font-size:12px;color:#92400E">Contact ${amName} directly to schedule.</p>`}
+      </div>`;
   }
-  const existDate = document.getElementById('koc-date').value;
-  const existTime = document.getElementById('koc-time').value;
-  if (existDate) document.getElementById('koc-date-step3').value = existDate;
-  if (existTime) document.getElementById('koc-time-step3').value = existTime;
 }
 
 // ── INTAKE STATUS CARD ────────────────────────────────────────
@@ -3383,7 +3409,7 @@ async function submitIO() {
       campaign_notes: document.getElementById('campaign-notes').value,
       koc_date: kocDate || null,
       koc_time: kocTime || null,
-      needs_koc: needsKoc,
+      needs_koc: kocProducts.length > 0,
       total_onetime: oneTime,
       total_monthly: monthly,
       signer_name: document.getElementById('auth-name').value,
