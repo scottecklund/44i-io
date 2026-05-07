@@ -13,14 +13,17 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-
-
       - name: Deploy to io.yourdigitalgroupresources.com
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./staging/
+          local-dir: ./
           server-dir: ./
-          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            README.md
+            .gitignore
