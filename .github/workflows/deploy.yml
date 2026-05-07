@@ -13,11 +13,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Rename io_v2.html → index.html in a clean staging dir
-      - name: Stage index.html
-        run: |
-          mkdir -p staging
-          cp io_v2.html staging/index.html
+
 
       - name: Deploy to io.yourdigitalgroupresources.com
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
