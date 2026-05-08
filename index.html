@@ -740,10 +740,33 @@ textarea{resize:vertical;min-height:70px}
       <div class="card-head"><h3>📅 Kick-Off Call Scheduling</h3></div>
       <div style="padding:18px">
         <div id="koc-products-list" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
-        <div id="koc-step3-display">
-          <!-- Populated by updateKocCard() -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div>
+            <label class="lbl">KOC Date <span style="color:#EF4444">*</span></label>
+            <input type="date" id="koc-date-step3" onchange="syncKocDate(this.value)"/>
+          </div>
+          <div>
+            <label class="lbl">KOC Time <span style="color:#EF4444">*</span></label>
+            <select id="koc-time-step3" onchange="syncKocTime(this.value)" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px">
+              <option value="">Select time...</option>
+              <option value="07:00">7:00 AM</option><option value="07:30">7:30 AM</option>
+              <option value="08:00">8:00 AM</option><option value="08:30">8:30 AM</option>
+              <option value="09:00">9:00 AM</option><option value="09:30">9:30 AM</option>
+              <option value="10:00">10:00 AM</option><option value="10:30">10:30 AM</option>
+              <option value="11:00">11:00 AM</option><option value="11:30">11:30 AM</option>
+              <option value="12:00">12:00 PM</option><option value="12:30">12:30 PM</option>
+              <option value="13:00">1:00 PM</option><option value="13:30">1:30 PM</option>
+              <option value="14:00">2:00 PM</option><option value="14:30">2:30 PM</option>
+              <option value="15:00">3:00 PM</option><option value="15:30">3:30 PM</option>
+              <option value="16:00">4:00 PM</option><option value="16:30">4:30 PM</option>
+              <option value="17:00">5:00 PM</option>
+            </select>
+          </div>
         </div>
-        <div id="koc-am-info" style="font-size:12px;color:var(--muted);padding:10px 12px;background:var(--light);border-radius:7px;margin-top:10px"></div>
+        <div id="koc-am-info" style="font-size:12px;color:var(--muted);padding:10px 12px;background:var(--light);border-radius:7px"></div>
+        <div id="koc-schedule-link" style="margin-top:10px;display:none">
+          <a id="koc-calendar-link" href="#" target="_blank" style="font-size:12px;font-weight:600;color:var(--accent)">📅 Open AM Calendar to Schedule →</a>
+        </div>
       </div>
     </div>
 
@@ -878,37 +901,29 @@ textarea{resize:vertical;min-height:70px}
 </div>
 
 <!-- ADMIN PANEL -->
-<div id="page-admin" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:7000;overflow-y:auto">
-  <div style="max-width:1200px;margin:0 auto;padding:24px">
-    <!-- Header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--accent);border-radius:12px;padding:18px 24px;margin-bottom:20px;box-shadow:0 4px 20px rgba(28,155,215,.25)">
-      <div style="display:flex;align-items:center;gap:12px">
-        <span style="font-size:22px">⚙️</span>
-        <div>
-          <h2 style="color:#fff;font-size:16px;font-weight:800;margin:0">Group Administration</h2>
-          <p style="color:rgba(255,255,255,.7);font-size:11px;margin:2px 0 0" id="admin-user-label"></p>
-        </div>
-      </div>
-      <button onclick="showAdmin(false)" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">✕ Close</button>
+<div id="page-admin" style="display:none">
+  <div class="card">
+    <div class="card-head" style="background:var(--accent)">
+      <h3 style="color:#fff">⚙️ Group Administration</h3>
+      <button onclick="showAdmin(false)" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">✕ Close</button>
     </div>
+    <div style="padding:20px">
 
-    <div class="card">
-      <div style="padding:20px">
-        <!-- Group list -->
-        <div id="admin-group-list" style="margin-bottom:20px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <p style="font-size:13px;font-weight:700;color:var(--text)">Groups <span id="admin-group-count" style="font-size:11px;color:var(--muted);font-weight:400"></span></p>
-            <button onclick="adminNewGroup()" style="padding:7px 16px;border-radius:7px;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer">+ New Group</button>
-          </div>
-          <div id="admin-groups-table"></div>
+      <!-- Group list -->
+      <div id="admin-group-list" style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <p style="font-size:13px;font-weight:700;color:var(--text)">Groups</p>
+          <button onclick="adminNewGroup()" style="padding:7px 16px;border-radius:7px;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer">+ New Group</button>
         </div>
+        <div id="admin-groups-table"></div>
+      </div>
 
       <!-- Group edit form — tabbed -->
       <div id="admin-group-form" style="display:none;background:#F8FAFC;border-radius:10px;border:1px solid var(--border);overflow:hidden">
         <!-- Tab bar -->
         <div style="display:flex;border-bottom:1px solid var(--border);background:#fff">
           <button id="tab-btn-info" onclick="adminTab('info')" style="padding:12px 20px;font-size:12px;font-weight:700;border:none;border-bottom:2px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer">Group Info</button>
-          <button id="tab-btn-pricing" onclick="adminTab('pricing')" style="padding:12px 20px;font-size:12px;font-weight:700;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--muted);cursor:pointer;display:${currentAdminUser?.canEditPricing ? 'block' : 'none'}">Custom Pricing</button>
+          <button id="tab-btn-pricing" onclick="adminTab('pricing')" style="padding:12px 20px;font-size:12px;font-weight:700;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--muted);cursor:pointer">Custom Pricing</button>
         </div>
 
         <div style="padding:20px">
@@ -929,22 +944,12 @@ textarea{resize:vertical;min-height:70px}
               </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-              <div>
-                <label class="lbl">Account Manager Name <span style="color:#EF4444">*</span> <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— appears in all AE-facing messaging</span></label>
-                <input type="text" id="admin-am-name" placeholder="e.g. Carol" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/>
-              </div>
+              <div><label class="lbl">Account Manager Name</label><input type="text" id="admin-am-name" placeholder="Full name" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
               <div><label class="lbl">Account Manager Email</label><input type="email" id="admin-am-email" placeholder="am@email.com" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
               <div><label class="lbl">Brand Color (Primary)</label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="admin-color" value="#1C9BD7" style="width:48px;height:38px;padding:2px;border-radius:7px;border:1px solid var(--border);cursor:pointer"/><input type="text" id="admin-color-hex" placeholder="#1C9BD7" style="flex:1;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:monospace" oninput="document.getElementById('admin-color').value=this.value"/></div></div>
-              <div><label class="lbl">Brand Color (Secondary) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— used for header when logo is light/white</span></label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="admin-color2" value="#000000" style="width:48px;height:38px;padding:2px;border-radius:7px;border:1px solid var(--border);cursor:pointer" oninput="document.getElementById('admin-color2-hex').value=this.value"/><input type="text" id="admin-color2-hex" placeholder="Optional — e.g. #000000" style="flex:1;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:monospace" oninput="if(this.value.match(/^#[0-9A-Fa-f]{6}$/))document.getElementById('admin-color2').value=this.value"/></div></div>
-            </div>
-                <label class="lbl">Logo URL</label>
-                <input type="text" id="admin-logo" placeholder="https://..." style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px" oninput="updateLogoPreview(this.value)"/>
-                <div id="admin-logo-preview" style="margin-top:8px;display:none;padding:8px;background:#F9FAFB;border-radius:7px;border:1px solid var(--border);text-align:center">
-                  <img id="admin-logo-img" style="max-height:40px;max-width:160px;object-fit:contain"/>
-                </div>
-              </div>
+              <div><label class="lbl">Logo URL</label><input type="text" id="admin-logo" placeholder="https://..." style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
               <div><label class="lbl">Trello Board ID</label><input type="text" id="admin-trello" placeholder="Board ID" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
@@ -960,17 +965,7 @@ textarea{resize:vertical;min-height:70px}
                 <input type="email" id="admin-from-email" placeholder="hello@cfdigital.com" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/>
               </div>
             </div>
-            <p style="font-size:10px;color:var(--accent);background:#EFF6FF;border-radius:6px;padding:8px 12px;margin-top:10px;margin-bottom:12px">⚠ All client-facing emails and documents will show the From Name and From Email above. The group's name and logo will appear on all IO PDFs and correspondence — never any 44i branding.</p>
-
-            <!-- IO Recipients -->
-            <div style="margin-bottom:4px">
-              <label class="lbl">IO Recipients <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— who receives the IO on submission</span></label>
-              <div id="admin-recipients-tags" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--border);border-radius:7px;background:#fff;min-height:42px;cursor:text" onclick="document.getElementById('admin-recipient-input').focus()"></div>
-              <div style="display:flex;gap:8px;margin-top:6px">
-                <input type="email" id="admin-recipient-input" placeholder="Add email and press Enter..." style="flex:1;padding:8px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px" onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();addRecipientTag(this.value);this.value='';}"/>
-                <button type="button" onclick="addRecipientTag(document.getElementById('admin-recipient-input').value);document.getElementById('admin-recipient-input').value=''" style="padding:8px 14px;border-radius:7px;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer">Add</button>
-              </div>
-            </div>
+            <p style="font-size:10px;color:var(--accent);background:#EFF6FF;border-radius:6px;padding:8px 12px;margin-top:10px;margin-bottom:0">⚠ All client-facing emails and documents will show the From Name and From Email above. The group's name and logo will appear on all IO PDFs and correspondence — never any 44i branding.</p>
           </div>
 
           <!-- TAB: Custom Pricing -->
@@ -987,10 +982,14 @@ textarea{resize:vertical;min-height:70px}
         </div>
       </div>
 
-      </div><!-- end card inner -->
-    </div><!-- end card -->
-  </div><!-- end max-width container -->
-</div><!-- end page-admin -->
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- INTAKE FORM MODAL -->
 <div id="intake-modal" class="modal-backdrop" style="display:none">
   <div class="modal-box">
     <div class="modal-header">
@@ -998,7 +997,7 @@ textarea{resize:vertical;min-height:70px}
         <h3 id="intake-modal-title">Campaign Intake Form</h3>
         <div class="modal-product" id="intake-modal-product"></div>
       </div>
-      <button onclick="skipIntakeModal()" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--muted);font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid var(--border)">Skip for now</button>
+      <button onclick="closeIntakeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1">✕</button>
     </div>
     <div class="modal-body" id="intake-modal-body"></div>
     <div class="modal-footer">
@@ -1016,7 +1015,7 @@ textarea{resize:vertical;min-height:70px}
   <div class="modal-box" style="max-width:480px">
     <div class="modal-header">
       <div><h3>Hosting Setup</h3><div class="modal-product" id="hosting-modal-product"></div></div>
-      <button onclick="skipHostingModal()" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--muted);font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid var(--border)">Skip for now</button>
+      <button onclick="closeHostingModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1">✕</button>
     </div>
     <div class="modal-body">
       <div class="modal-section">
@@ -1068,8 +1067,8 @@ textarea{resize:vertical;min-height:70px}
 <script>
 const BASE_URL = "https://io.yourdigitalgroupresources.com";
 const BASE_PORTAL_DOMAIN = "https://review.yourdigitalgroupresources.com";
-const SUPABASE_URL = "https://emydtkhnespbxraiijkx.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVteWR0a2huZXNwYnhyYWlpamt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTA3NjUsImV4cCI6MjA5MzQ4Njc2NX0.vh_5f19z2cb4_NU0sEKAcPiiNXhQZp-61bBN7lqEKbI";
+const SUPABASE_URL = "https://yrimyofhqekiuhwegdsg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_l9K0U3dJNLmu_x9fIqPVkw_jX8JRsLQ";
 const PROXY = SUPABASE_URL + "/functions/v1/claude-proxy";
 
 // ── KOC PRODUCT MAP ───────────────────────────────────────────
@@ -1093,9 +1092,9 @@ const PRODUCT_CONFIG = {
   'tlp-bb':     { koc:'required', intake:'tlp',          label:'Targeted Landing Pages — Builder' },
   'tlp-bp':     { koc:'required', intake:'tlp',          label:'Targeted Landing Pages — Pro' },
   // Social Media — KOC required, no AE intake
-  'sm-bs':      { koc:'required', intake:'smm',           label:'Social Media — Starter' },
-  'sm-bb':      { koc:'required', intake:'smm',           label:'Social Media — Builder' },
-  'sm-bp':      { koc:'required', intake:'smm',           label:'Social Media — Pro' },
+  'sm-bs':      { koc:'required', intake:null,           label:'Social Media — Starter' },
+  'sm-bb':      { koc:'required', intake:null,           label:'Social Media — Builder' },
+  'sm-bp':      { koc:'required', intake:null,           label:'Social Media — Pro' },
   // Email Marketing — KOC required + AE intake
   'em-bb-2500': { koc:'required', intake:'email',        label:'Email Marketing — Builder <2,500' },
   'em-bb-5000': { koc:'required', intake:'email',        label:'Email Marketing — Builder <5,000' },
@@ -1160,38 +1159,6 @@ const PRODUCT_CONFIG = {
 
 // ── INTAKE FORM DEFINITIONS ───────────────────────────────────
 const INTAKE_FORMS = {
-  smm: {
-    title: 'Social Media Management Intake',
-    sections: [
-      { title: 'Social Channels', fields: [
-        { key:'primary_channel',   label:'Primary Channel',              type:'radio',    options:['Facebook','Instagram','LinkedIn','X','TikTok','Pinterest'], required:true },
-        { key:'secondary_channel', label:'Secondary Channel (if any)',   type:'text' },
-        { key:'gbp_status',        label:'Google Business Profile',      type:'radio',    options:['Already set up','Needs set up'], required:true },
-        { key:'website_url',       label:'Website URL',                  type:'text' },
-      ]},
-      { title: 'Current Strategy & Goals', fields: [
-        { key:'social_goals',      label:'What are your current Social Media goals?',           type:'textarea', required:true },
-        { key:'target_audience',   label:'Who is your target audience?',                        type:'textarea', required:true },
-        { key:'has_content',       label:'Do you have content (photos & video) to provide?',   type:'radio',    options:['Yes — will provide ongoing','Yes — limited','No'], required:true },
-        { key:'avoid',             label:'Post types or imagery to avoid',                      type:'textarea' },
-        { key:'keywords',          label:'Keywords / Hashtags / Taglines to focus on',          type:'textarea' },
-        { key:'cta',               label:'Preferred call-to-action',                            type:'radio',    options:['Website','Phone','Visit Us','Other'] },
-      ]},
-      { title: 'Suggested Post Types', fields: [
-        { key:'post_types',        label:'Post types to focus on (check all that apply)',       type:'textarea', },
-      ]},
-      { title: 'SMM Pro — Social Ads (if applicable)', fields: [
-        { key:'ad_format',         label:'Ad format',                                           type:'radio',    options:['Carousel (up to 10 cards)','Video Ad'] },
-        { key:'ad_content',        label:'Do you have content for ads (video/carousel)?',       type:'radio',    options:['Yes','No'] },
-        { key:'unique_topics',     label:'What makes you unique? (carousel topics)',            type:'textarea' },
-        { key:'ad_target',         label:'Target location and audience for ads',                type:'textarea' },
-        { key:'ad_messaging',      label:'Ad messaging / Call to Action',                       type:'textarea' },
-      ]},
-      { title: 'Additional Notes', fields: [
-        { key:'notes',             label:'Additional notes or comments',                        type:'textarea' },
-      ]},
-    ]
-  },
   tlp: {
     title: 'Targeted Landing Pages Intake',
     sections: [
@@ -1605,9 +1572,7 @@ let currentHostingPageType = null;
 // ── SUPABASE ─────────────────────────────────────────────────
 async function sb(path, opts={}) {
   const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    mode: 'cors',
-    credentials: 'omit',
-    headers: {apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'X-Client-Info': 'supabase-js/2.0.0', Prefer: opts.prefer || 'return=representation', ...opts.headers},
+    headers: {apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: opts.prefer || 'return=representation', ...opts.headers},
     ...opts
   });
   const t = await res.text();
@@ -1655,22 +1620,9 @@ function promptHosting(serviceId, pageType) {
   document.getElementById('hosting-package-section').style.display = 'none';
   document.getElementById('hosting-prorate-preview').style.display = 'none';
   const pkgEl = document.getElementById('hosting-package-options');
-  // MRR hosting options first, then annual
-  const annualOpt = pageType === 'ecomm'
-    ? `<label><input type="radio" name="hosting-pkg" value="ecomm" onchange="onHostingPkgChange('ecomm')"/> $700/yr E-Commerce Hosting (60-day start, prorated)</label>`
-    : `<label><input type="radio" name="hosting-pkg" value="${pageType}" onchange="onHostingPkgChange('${pageType}')"/> $450/yr Standard Hosting (${HOSTING_CFG[pageType]?.days}-day start, prorated)</label>`;
-  pkgEl.innerHTML = `
-    <div style="margin-bottom:10px">
-      <p style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Monthly Recurring (Recommended)</p>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><input type="radio" name="hosting-pkg" value="mrr-49" onchange="onHostingPkgChange('mrr-49')"/> <span>Hosting Only — <strong>$49/mo</strong></span></label>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><input type="radio" name="hosting-pkg" value="mrr-69" onchange="onHostingPkgChange('mrr-69')"/> <span>Hosting &amp; Content — <strong>$69/mo</strong></span></label>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><input type="radio" name="hosting-pkg" value="mrr-89" onchange="onHostingPkgChange('mrr-89')"/> <span>Hosting, Content &amp; AI Chatbot — <strong>$89/mo</strong></span></label>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><input type="radio" name="hosting-pkg" value="mrr-109" onchange="onHostingPkgChange('mrr-109')"/> <span>Hosting + Content + AI + ADA — <strong>$109/mo</strong></span></label>
-    </div>
-    <div style="border-top:1px solid var(--border);padding-top:10px">
-      <p style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Annual (One-Time, Prorated)</p>
-      ${annualOpt}
-    </div>`;
+  pkgEl.innerHTML = pageType === 'ecomm'
+    ? `<label><input type="radio" name="hosting-pkg" value="ecomm" onchange="onHostingPkgChange('ecomm')"/> $700 E-Commerce Hosting (60-day start)</label>`
+    : `<label><input type="radio" name="hosting-pkg" value="${pageType}" onchange="onHostingPkgChange('${pageType}')"/> $450 Standard Hosting (${HOSTING_CFG[pageType]?.days}-day start)</label>`;
   document.getElementById('hosting-modal').style.display = 'flex';
 }
 
@@ -1680,18 +1632,12 @@ function onHostingChoiceChange(val) {
 }
 
 function onHostingPkgChange(pkgType) {
+  const ioDate = document.getElementById('io-date').value;
+  const result = calcProration(pkgType, ioDate);
   const el = document.getElementById('hosting-prorate-preview');
-  if (pkgType.startsWith('mrr-')) {
-    const price = pkgType.split('-')[1];
-    el.innerHTML = `<strong>Monthly Hosting: $${price}/mo</strong> — added to monthly recurring total`;
+  if (result) {
+    el.innerHTML = `<strong>Prorated Hosting: $${result.proratedAmt.toFixed(2)}</strong> ${result.note}`;
     el.style.display = 'block';
-  } else {
-    const ioDate = document.getElementById('io-date').value;
-    const result = calcProration(pkgType, ioDate);
-    if (result) {
-      el.innerHTML = `<strong>Prorated Hosting: $${result.proratedAmt.toFixed(2)}</strong> ${result.note}`;
-      el.style.display = 'block';
-    }
   }
 }
 
@@ -1701,26 +1647,10 @@ function saveHostingChoice() {
   if (choiceEl.value === 'us') {
     const pkgEl = document.querySelector('input[name="hosting-pkg"]:checked');
     if (!pkgEl) { showToast('Please select a hosting package', 'error'); return; }
-    const pkgVal = pkgEl.value;
-    if (pkgVal.startsWith('mrr-')) {
-      // Monthly recurring hosting — add to selected as a recurring line item
-      const price = parseInt(pkgVal.split('-')[1]);
-      const mrrMap = { 49:'wm-hosting', 69:'wm-host-content', 89:'wm-host-ai', 109:'wm-host-all' };
-      const mrrId = mrrMap[price];
-      const mrrData = SERVICE_DATA[mrrId];
-      if (mrrData) {
-        selected[mrrId] = {...mrrData, notes:'Added via hosting prompt', spend:0};
-        hostingChoices[currentHostingServiceId] = { choice:'us', package:pkgVal, isMRR:true, mrrId, mrrPrice:price };
-        showToast(`Monthly hosting added — $${price}/mo`);
-        updateBadges();
-        updateIntakeStatusCard();
-      }
-    } else {
-      const result = calcProration(pkgVal, document.getElementById('io-date').value);
-      hostingChoices[currentHostingServiceId] = { choice:'us', package:pkgVal, ...result };
-      if (selected[currentHostingServiceId]) selected[currentHostingServiceId].hosting_note = result.note;
-      showToast(`Hosting added — prorated $${result.proratedAmt.toFixed(2)}`);
-    }
+    const result = calcProration(pkgEl.value, document.getElementById('io-date').value);
+    hostingChoices[currentHostingServiceId] = { choice:'us', package:pkgEl.value, ...result };
+    if (selected[currentHostingServiceId]) selected[currentHostingServiceId].hosting_note = result.note;
+    showToast(`Hosting added — prorated $${result.proratedAmt.toFixed(2)}`);
   } else {
     hostingChoices[currentHostingServiceId] = { choice:'self' };
     showToast('Client self-hosting noted');
@@ -1735,20 +1665,6 @@ function closeHostingModal() {
     const sid = window._pendingIntakeServiceId;
     window._pendingIntakeServiceId = null;
     setTimeout(() => openIntakeForService(sid), 150);
-  }
-  // If a KOC was queued to open after hosting, open it now
-  if (window._pendingKocServiceId) {
-    const sid = window._pendingKocServiceId;
-    window._pendingKocServiceId = null;
-    setTimeout(() => {
-      if (!globalKocSchedule) {
-        openKocModal(sid);
-      } else {
-        // KOC already scheduled — go straight to intake if needed
-        const cfg = PRODUCT_CONFIG[sid];
-        if (cfg?.intake) setTimeout(() => openIntakeForService(sid), 150);
-      }
-    }, 150);
   }
 }
 
@@ -1779,7 +1695,7 @@ function openIntakeForService(serviceId, forceEdit) {
     const prettyDate = `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}`;
     const prettyTime = kocTime || '';
     const calUrl = selectedGroup?.am_calendar_url;
-    const amName = selectedGroup?.am_name || 'your Account Manager';
+    const amName = selectedGroup?.am_name || 'your AM';
 
     document.getElementById('intake-modal-body').innerHTML = `
       <div style="text-align:center;padding:32px 24px">
@@ -1821,7 +1737,7 @@ function openIntakeForService(serviceId, forceEdit) {
   // ── If THIS form was bypassed, show the "already requested" screen ──
   if (existing.bypassed) {
     const calUrl = selectedGroup?.am_calendar_url;
-    const amName = selectedGroup?.am_name || 'your Account Manager';
+    const amName = selectedGroup?.am_name || 'your AM';
     document.getElementById('intake-modal-body').innerHTML = `
       <div style="text-align:center;padding:32px 24px">
         <div style="font-size:48px;margin-bottom:16px">✋</div>
@@ -1877,32 +1793,10 @@ function confirmBypass(formKey) {
   intakeData[formKey] = { bypassed:true, bypassNote:note, fields:{} };
 
   const calUrl = selectedGroup?.am_calendar_url;
-  const amName = selectedGroup?.am_name || 'your Account Manager';
+  const amName = selectedGroup?.am_name || 'your AM';
   const modal = document.getElementById('intake-modal-body');
 
   if (modal) {
-    // If KOC already scheduled, show appointment instead of calendar link
-    const ks = globalKocSchedule;
-    let kocSection = '';
-    if (ks?.date) {
-      const [y,m,d] = ks.date.split('-');
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}${ks.time ? ' · ' + ks.time : ''}`;
-      kocSection = `
-        <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:12px 20px;margin:0 auto 20px;max-width:320px">
-          <p style="font-size:11px;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📅 Kick-Off Call Scheduled</p>
-          <p style="font-size:14px;font-weight:700;color:#1E40AF;margin:0">${pretty} with ${amName}</p>
-          <p style="font-size:11px;color:#3B82F6;margin:4px 0 0">This will be covered on your existing call.</p>
-        </div>`;
-    } else if (calUrl) {
-      kocSection = `
-        <a href="${calUrl}" target="_blank"
-          style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--accent);color:#fff;border-radius:40px;font-size:13px;font-weight:700;text-decoration:none;margin-bottom:24px;box-shadow:0 4px 12px rgba(0,0,0,.12)">
-          📅 Open ${amName}'s Calendar
-        </a><br>
-        <p style="font-size:11px;color:var(--muted);margin-bottom:20px">A calendar invite will be sent to you and the client once booked.</p>`;
-    }
-
     modal.innerHTML = `
       <div style="text-align:center;padding:32px 24px">
         <div style="font-size:48px;margin-bottom:16px">✋</div>
@@ -1911,7 +1805,12 @@ function confirmBypass(formKey) {
           Got it — ${amName} will cover this intake on your kick-off call.
           ${note ? `<br><br><em style="font-size:12px">"${note}"</em>` : ''}
         </p>
-        ${kocSection}
+        ${calUrl ? `
+          <a href="${calUrl}" target="_blank"
+            style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--accent);color:#fff;border-radius:40px;font-size:13px;font-weight:700;text-decoration:none;margin-bottom:24px;box-shadow:0 4px 12px rgba(0,0,0,.12)">
+            📅 Open ${amName}'s Calendar
+          </a><br>` : ''}
+        <p style="font-size:11px;color:var(--muted);margin-bottom:20px">A calendar invite will be sent to you and the client once booked.</p>
         <button onclick="closeIntakeModal();updateIntakeStatusCard();"
           style="padding:10px 28px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
           Done
@@ -1930,9 +1829,11 @@ function unlockKocSave(formKey) {
   if (!intakeData[formKey]) intakeData[formKey] = { fields:{} };
   intakeData[formKey].kocCalendarOpened = true;
 
+  // Unlock the save button
   const saveBtn = document.getElementById('intake-save-btn');
   if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; saveBtn.style.cursor = ''; saveBtn.title = ''; }
 
+  // Prompt for the booked date/time inline in the footer
   const footer = document.getElementById('intake-modal-footer-left');
   if (footer) {
     const times = ['7:00 AM','7:30 AM','8:00 AM','8:30 AM','9:00 AM','9:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM','4:30 PM','5:00 PM','5:30 PM','6:00 PM'];
@@ -1947,9 +1848,6 @@ function unlockKocSave(formKey) {
         </select>
       </div>`;
   }
-  // Update body message in KOC-only modal
-  const msg = document.getElementById('koc-modal-footer-msg');
-  if (msg) msg.innerHTML = `<span style="color:#16A34A;font-weight:600">✓ Calendar opened — record your appointment time above, then click Done</span>`;
 }
 
 function storeKocSchedule() {
@@ -1957,35 +1855,10 @@ function storeKocSchedule() {
   const time = document.getElementById('koc-booked-time')?.value;
   if (date || time) {
     globalKocSchedule = { date: date || '', time: time || '' };
+    // Also sync to Step 3 KOC fields
     if (date) { const d = document.getElementById('koc-date'); if(d) d.value = date; const d3 = document.getElementById('koc-date-step3'); if(d3) d3.value = date; }
     if (time) { const t = document.getElementById('koc-time'); if(t) t.value = time; const t3 = document.getElementById('koc-time-step3'); if(t3) t3.value = time; }
-    updateKocRowBadges();
   }
-}
-
-function updateKocRowBadges() {
-  // Remove any existing KOC badges
-  document.querySelectorAll('.koc-row-badge').forEach(el => el.remove());
-  if (!globalKocSchedule?.date) return;
-
-  // Format the display date
-  const [y,m,d] = globalKocSchedule.date.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}${globalKocSchedule.time ? ' · ' + globalKocSchedule.time : ''}`;
-
-  // Add badge to every selected KOC-required product row
-  Object.keys(selected).forEach(id => {
-    if (PRODUCT_CONFIG[id]?.koc !== 'required') return;
-    const row = document.querySelector(`tr[data-id="${id}"]`);
-    if (!row) return;
-    const nameTd = row.querySelector('td:nth-child(2)');
-    if (!nameTd || nameTd.querySelector('.koc-row-badge')) return;
-    const badge = document.createElement('span');
-    badge.className = 'koc-row-badge';
-    badge.textContent = `📅 ${pretty}`;
-    badge.style.cssText = 'margin-left:8px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;color:#166534;background:#DCFCE7;white-space:nowrap';
-    nameTd.appendChild(badge);
-  });
 }
 
 function clearKocSchedule() {
@@ -2001,80 +1874,6 @@ function clearKocSchedule() {
   if (sid) openIntakeForService(sid, true);
 }
 
-function openKocModal(serviceId) {
-  const cfg = PRODUCT_CONFIG[serviceId];
-  const amName = selectedGroup?.am_name || 'your Account Manager';
-  const calUrl = selectedGroup?.am_calendar_url;
-  const label = cfg?.label || serviceId;
-
-  // If KOC already scheduled — show existing appointment, auto-confirm
-  if (globalKocSchedule?.date) {
-    const [y,m,d] = globalKocSchedule.date.split('-');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}${globalKocSchedule.time ? ' · ' + globalKocSchedule.time : ''}`;
-    showToast(`📅 KOC already scheduled: ${pretty} — this product will be covered`);
-    return;
-  }
-
-  // Show KOC modal
-  document.getElementById('intake-modal-title').textContent = 'Kick-Off Call Required';
-  document.getElementById('intake-modal-product').textContent = label;
-  document.getElementById('intake-modal-body').innerHTML = `
-    <div style="text-align:center;padding:24px 16px">
-      <div style="font-size:40px;margin-bottom:14px">📅</div>
-      <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;max-width:360px;margin-left:auto;margin-right:auto">
-        <strong>${label}</strong> requires a Kick-Off Call with ${amName}.<br>
-        Use the calendar below to schedule — a confirmation will be sent to you and the client.
-      </p>
-      ${calUrl ? `
-        <a href="${calUrl}" target="_blank"
-          onmousedown="unlockKocSave('__koc_only__')"
-          style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--accent);color:#fff;border-radius:40px;font-size:13px;font-weight:700;text-decoration:none;margin-bottom:24px;box-shadow:0 4px 12px rgba(0,0,0,.12)">
-          📅 Open ${amName}'s Calendar →
-        </a>` : `<p style="font-size:12px;color:var(--muted);margin-bottom:20px">Contact ${amName} directly to schedule.</p>`}
-      <div id="koc-modal-footer-msg" style="font-size:11px;color:var(--muted)">Open the calendar above to schedule, then click Done.</div>
-    </div>`;
-  document.getElementById('intake-modal-footer-left').innerHTML = '';
-  const saveBtn = document.getElementById('intake-save-btn');
-  if (saveBtn) {
-    saveBtn.textContent = 'Done';
-    saveBtn.style.display = '';
-    saveBtn.disabled = !intakeData['__koc_only__']?.kocCalendarOpened;
-    saveBtn.style.opacity = intakeData['__koc_only__']?.kocCalendarOpened ? '' : '0.4';
-    saveBtn.style.cursor = intakeData['__koc_only__']?.kocCalendarOpened ? '' : 'not-allowed';
-    saveBtn.onclick = () => {
-      saveBtn.textContent = 'Save Intake Info';
-      saveBtn.onclick = saveIntakeForm;
-      closeIntakeModal();
-      // If this product also has an intake form, open it now
-      const cfg = PRODUCT_CONFIG[serviceId];
-      if (cfg?.intake) {
-        const existing = intakeData[cfg.intake];
-        const notStarted = !existing || (!existing.completed && !existing.bypassed && (!existing.fields || Object.keys(existing.fields).length === 0));
-        if (notStarted) setTimeout(() => openIntakeForService(serviceId), 200);
-      }
-    };
-  }
-  currentIntakeServiceId = serviceId;
-  document.getElementById('intake-modal').style.display = 'flex';
-}
-
-function skipIntakeModal() {
-  // Flag this product as skipped — row badge will show Schedule Required
-  const sid = currentIntakeServiceId;
-  if (sid) {
-    const cfg = PRODUCT_CONFIG[sid];
-    showToast(`⚠ ${cfg?.label || 'This product'} needs a KOC scheduled before submission`);
-  }
-  closeIntakeModal();
-}
-
-function skipHostingModal() {
-  // Flag hosting as skipped — row will show no hosting choice
-  showToast('⚠ Hosting not confirmed — required before submission for website products');
-  closeHostingModal();
-}
-
 function addToExistingKoc(formKey) {
   // Mark this form as bypassed and added to the existing KOC
   intakeData[formKey] = { bypassed:true, bypassNote:'Added to existing kick-off call', fields:{} };
@@ -2085,7 +1884,7 @@ function addToExistingKoc(formKey) {
 
 function showFullIntakeForm(serviceId, cfg, formDef, existing, isKoc) {
   const calUrl = selectedGroup?.am_calendar_url;
-  const amName = selectedGroup?.am_name || 'your Account Manager';
+  const amName = selectedGroup?.am_name || 'your AM';
   const kocDateVal = document.getElementById('koc-date')?.value || '';
   const kocTimeVal = document.getElementById('koc-time')?.value || '';
 
@@ -2117,7 +1916,7 @@ function showFullIntakeForm(serviceId, cfg, formDef, existing, isKoc) {
           <p style="font-size:12px;color:#92400E;margin-bottom:12px">Use ${amName}'s calendar to schedule — a confirmation will be sent to you and the client.</p>
           ${calUrl ? `
             <a href="${calUrl}" target="_blank"
-              onmousedown="unlockKocSave('${cfg.intake}')"
+              onclick="unlockKocSave('${cfg.intake}')"
               style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:var(--accent);color:#fff;border-radius:20px;font-size:12px;font-weight:700;text-decoration:none">
               📅 Open ${amName}'s Calendar →
             </a>` : `<p style="font-size:12px;color:#92400E">Contact ${amName} directly to schedule.</p>`}
@@ -2192,18 +1991,15 @@ function saveIntakeForm() {
   const formDef = INTAKE_FORMS[formKey];
   const cfg = PRODUCT_CONFIG[sid];
   const isKoc = cfg?.koc === 'required';
-  const amName = selectedGroup?.am_name || 'your Account Manager';
-  const calUrl = selectedGroup?.am_calendar_url;
 
   // ── For KOC-required products, calendar must have been opened ──
   if (isKoc && !intakeData[formKey]?.kocCalendarOpened) {
-    showToast(`It looks like you haven't opened ${amName}'s calendar yet — please do so before saving`, 'error');
+    showToast('It looks like you haven\'t opened the KOC calendar yet — please do so before saving', 'error');
     return;
   }
 
   const fields = {};
   let missingRequired = [];
-  let blankOptional = [];
 
   // Clear any previous highlights
   document.querySelectorAll('#intake-modal-body .field-missing').forEach(el => {
@@ -2221,27 +2017,20 @@ function saveIntakeForm() {
         val = el ? el.value.trim() : '';
       }
       fields[field.key] = val;
-
-      if (!val && !intakeData[formKey]?.bypassed) {
-        if (!isKoc && field.required) {
-          // Hard required on non-KOC forms
-          missingRequired.push(field.label);
-          const fieldEl = document.querySelector(
-            `[data-key="${field.key}"][data-form="${formKey}"], input[name="intake-${formKey}-${field.key}"]`
-          );
-          if (fieldEl) {
-            const wrapper = fieldEl.closest('.modal-field');
-            if (wrapper) wrapper.classList.add('field-missing');
-          }
-        } else if (field.required) {
-          // Blank required field on KOC form — track for blank-field prompt
-          blankOptional.push(field.label);
+      // Only validate required fields on non-KOC forms — KOC forms have AM coverage
+      if (!isKoc && field.required && !val && !intakeData[formKey]?.bypassed) {
+        missingRequired.push(field.label);
+        const fieldEl = document.querySelector(
+          `[data-key="${field.key}"][data-form="${formKey}"], input[name="intake-${formKey}-${field.key}"]`
+        );
+        if (fieldEl) {
+          const wrapper = fieldEl.closest('.modal-field');
+          if (wrapper) wrapper.classList.add('field-missing');
         }
       }
     });
   });
 
-  // Block on hard required fields (non-KOC forms only)
   if (missingRequired.length > 0) {
     const firstMissing = document.querySelector('#intake-modal-body .field-missing');
     if (firstMissing) firstMissing.scrollIntoView({ behavior:'smooth', block:'center' });
@@ -2249,76 +2038,6 @@ function saveIntakeForm() {
     return;
   }
 
-  // ── Blank field scenarios ──────────────────────────────────
-  if (blankOptional.length > 0) {
-    const modal = document.getElementById('intake-modal-body');
-    const blankCount = blankOptional.length;
-
-    // Always persist the partially filled fields first — never lose what was entered
-    if (!intakeData[formKey]) intakeData[formKey] = {};
-    intakeData[formKey].fields = fields;
-
-    // Scenario A — KOC already scheduled — auto-save and confirm
-    if (globalKocSchedule?.date) {
-      const [y,m,d] = globalKocSchedule.date.split('-');
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}${globalKocSchedule.time ? ' · ' + globalKocSchedule.time : ''}`;
-      intakeData[formKey] = { ...(intakeData[formKey]||{}), fields, completed:true, kocCalendarOpened: isKoc ? true : undefined };
-      updateIntakeStatusCard();
-      modal.innerHTML = `
-        <div style="text-align:center;padding:32px 24px">
-          <div style="font-size:40px;margin-bottom:14px">✅</div>
-          <h3 style="font-size:16px;font-weight:700;margin-bottom:10px;color:var(--text)">Intake Saved</h3>
-          <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;max-width:380px;margin-left:auto;margin-right:auto">
-            ${blankCount} blank field${blankCount>1?'s':''} will be covered on your kick-off call with <strong>${amName}</strong> on <strong>${pretty}</strong>.
-          </p>
-          <button onclick="closeIntakeModal()" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Done</button>
-        </div>`;
-      document.getElementById('intake-modal-footer-left').innerHTML = '';
-      const saveBtn = document.getElementById('intake-save-btn');
-      if (saveBtn) saveBtn.style.display = 'none';
-      showToast('Intake saved ✓');
-      return;
-    }
-
-    // Scenarios B & C — No KOC scheduled (KOC-required or not)
-    const calUrl = selectedGroup?.am_calendar_url;
-    modal.innerHTML = `
-      <div style="text-align:center;padding:32px 24px">
-        <div style="font-size:40px;margin-bottom:14px">📋</div>
-        <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;color:var(--text)">A Few Fields Are Still Blank</h3>
-        <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto">
-          We need these completed to get your campaign started. Get on a call with <strong>${amName}</strong> and your client so we can work through them together.
-        </p>
-        <div style="display:flex;flex-direction:column;gap:10px;max-width:320px;margin:0 auto">
-          ${calUrl ? `
-          <a href="${calUrl}" target="_blank"
-            onmousedown="markKocRequested('${formKey}','${sid}')"
-            style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;text-decoration:none">
-            📅 Get on ${amName}'s Calendar →
-          </a>` : `
-          <button onclick="markKocRequested('${formKey}','${sid}')"
-            style="padding:12px 20px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
-            ✋ Request Help from ${amName}
-          </button>`}
-          <button onclick="reopenIntakeForm('${formKey}','${sid}')"
-            style="padding:12px 20px;border-radius:8px;background:var(--light);color:var(--text);border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
-            ← Go Back &amp; Complete the Form
-          </button>
-        </div>
-      </div>`;
-    document.getElementById('intake-modal-footer-left').innerHTML = '';
-    const saveBtn2 = document.getElementById('intake-save-btn');
-    if (saveBtn2) saveBtn2.style.display = 'none';
-    return;
-  }
-  // ──────────────────────────────────────────────────────────
-
-  // All fields complete — save normally
-  saveIntakeData(formKey, sid, fields, isKoc);
-}
-
-function saveIntakeData(formKey, sid, fields, isKoc) {
   intakeData[formKey] = {
     ...(intakeData[formKey]||{}),
     fields,
@@ -2326,6 +2045,8 @@ function saveIntakeData(formKey, sid, fields, isKoc) {
     kocCalendarOpened: isKoc ? true : undefined
   };
   updateIntakeStatusCard();
+
+  // Show save confirmation with edit option
   const modal = document.getElementById('intake-modal-body');
   if (modal) {
     modal.innerHTML = `
@@ -2333,7 +2054,7 @@ function saveIntakeData(formKey, sid, fields, isKoc) {
         <div style="font-size:44px;margin-bottom:14px">✅</div>
         <h3 style="font-size:16px;font-weight:700;margin-bottom:10px;color:var(--text)">Intake Form Saved</h3>
         <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px">
-          All answers have been saved. You can edit this form at any time from the row button.
+          All answers have been saved. You can edit this form at any time from the Intake Status card.
         </p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button onclick="openIntakeForService('${sid}', true)"
@@ -2353,38 +2074,6 @@ function saveIntakeData(formKey, sid, fields, isKoc) {
   showToast('Intake form saved ✓');
 }
 
-function markKocRequested(formKey, sid) {
-  // Calendar link clicked — mark as bypassed with partial fields preserved
-  intakeData[formKey] = {
-    ...(intakeData[formKey]||{}),
-    bypassed: true,
-    bypassNote: 'Incomplete — getting on a call with ' + (selectedGroup?.am_name || 'AM') + ' to complete'
-  };
-  updateIntakeStatusCard();
-  showToast(`📅 Great — get on ${selectedGroup?.am_name || 'AM'}'s calendar and we'll sort the rest out on the call`);
-  closeIntakeModal();
-}
-
-function reopenIntakeForm(formKey, sid) {
-  // Go back to the form with existing partial fields pre-filled
-  openIntakeForService(sid, true);
-}
-
-function saveAndOpenKoc(formKey, sid) {
-  const fields = intakeData[formKey]?.fields || {};
-  intakeData[formKey] = { ...(intakeData[formKey]||{}), fields };
-  closeIntakeModal();
-  setTimeout(() => openKocModal(sid), 200);
-}
-
-function requestAmHelpAndSave(formKey, sid) {
-  const fields = intakeData[formKey]?.fields || {};
-  intakeData[formKey] = { ...(intakeData[formKey]||{}), fields, bypassed:true, bypassNote:'Incomplete — AM to cover blank fields' };
-  updateIntakeStatusCard();
-  closeIntakeModal();
-  showToast(`✋ ${selectedGroup?.am_name || 'AM'} will cover the blank fields`);
-}
-
 function closeIntakeModal() {
   document.getElementById('intake-modal').style.display = 'none';
   currentIntakeServiceId = null;
@@ -2393,16 +2082,6 @@ function closeIntakeModal() {
 }
 
 // ── KOC CARD ──────────────────────────────────────────────────
-function rescheduleKoc() {
-  // Clear existing schedule so AE books a new one via calendar
-  globalKocSchedule = null;
-  document.getElementById('koc-date').value = '';
-  document.getElementById('koc-time').value = '';
-  updateKocRowBadges();
-  updateKocCard();
-  showToast(`📅 Opening ${selectedGroup?.am_name || 'AM'}'s calendar — book a new time then enter the details in the modal`);
-}
-
 function syncKocDate(val) { document.getElementById('koc-date').value = val; }
 function syncKocTime(val) { document.getElementById('koc-time').value = val; }
 
@@ -2411,46 +2090,23 @@ function updateKocCard() {
   const card = document.getElementById('koc-card');
   if (!kocProducts.length || !selectedGroup?.has_koc) { card.style.display = 'none'; return; }
   card.style.display = 'block';
-
   document.getElementById('koc-products-list').innerHTML =
     `<strong>KOC required for:</strong> ${kocProducts.map(id => PRODUCT_CONFIG[id]?.label||id).join(', ')}`;
-
   const amName = selectedGroup?.am_name || 'your Account Manager';
+  document.getElementById('koc-am-info').textContent =
+    `Kick-off call will be placed on ${amName}'s calendar. An invite will be sent to the client and AE.`;
   const calUrl = selectedGroup?.am_calendar_url;
-  const display = document.getElementById('koc-step3-display');
-  const amInfo = document.getElementById('koc-am-info');
-
-  amInfo.textContent = `Kick-off call will be placed on ${amName}'s calendar. An invite will be sent to the client and AE.`;
-
-  if (globalKocSchedule?.date) {
-    // KOC scheduled — show read-only with reschedule option
-    const [y,m,d] = globalKocSchedule.date.split('-');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}${globalKocSchedule.time ? ' · ' + globalKocSchedule.time : ''}`;
-    display.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 18px">
-        <div>
-          <p style="font-size:11px;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📅 Kick-Off Call Scheduled</p>
-          <p style="font-size:16px;font-weight:700;color:#1E40AF;margin:0">${pretty} with ${amName}</p>
-        </div>
-        ${calUrl ? `<a href="${calUrl}" target="_blank" onmousedown="rescheduleKoc()"
-          style="font-size:12px;font-weight:600;color:#3B82F6;text-decoration:none;white-space:nowrap;padding:6px 12px;border:1px solid #BFDBFE;border-radius:7px;background:#fff">
-          🔄 Reschedule →
-        </a>` : ''}
-      </div>`;
+  const linkEl = document.getElementById('koc-schedule-link');
+  if (calUrl) {
+    document.getElementById('koc-calendar-link').href = calUrl;
+    linkEl.style.display = 'block';
   } else {
-    // Not yet scheduled
-    display.innerHTML = `
-      <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:16px;text-align:center">
-        <p style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:8px">⚠ Kick-Off Call Not Yet Scheduled</p>
-        <p style="font-size:12px;color:#92400E;margin-bottom:14px">You must schedule a KOC with ${amName} before submitting.</p>
-        ${calUrl ? `<a href="${calUrl}" target="_blank"
-          onmousedown="openKocModal(Object.keys(selected).find(id=>PRODUCT_CONFIG[id]?.koc==='required'))"
-          style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--accent);color:#fff;border-radius:20px;font-size:13px;font-weight:700;text-decoration:none">
-          📅 Open ${amName}'s Calendar →
-        </a>` : `<p style="font-size:12px;color:#92400E">Contact ${amName} directly to schedule.</p>`}
-      </div>`;
+    linkEl.style.display = 'none';
   }
+  const existDate = document.getElementById('koc-date').value;
+  const existTime = document.getElementById('koc-time').value;
+  if (existDate) document.getElementById('koc-date-step3').value = existDate;
+  if (existTime) document.getElementById('koc-time-step3').value = existTime;
 }
 
 // ── INTAKE STATUS CARD ────────────────────────────────────────
@@ -2540,14 +2196,14 @@ async function loadGroup() {
   const slug = getSlug();
   const isProd = window.location.hostname.includes('yourdigitalgroupresources.com');
 
-  // No slug OR not on production → dev mode
-  if (!slug || !isProd) {
+  // No slug → dev mode picker; slug always queries Supabase
+  if (!slug) {
     showDevModePicker();
     return;
   }
 
   try {
-    const results = await sb('groups?io_slug=eq.' + encodeURIComponent(slug) + '&select=id,name,io_slug,am_name,am_email,am_calendar_url,brand_color,brand_color2,logo_url,trello_board_id,trello_email,io_recipient,has_koc,from_name,from_email,io_pricing,portal_domain');
+    const results = await sb('groups?io_slug=eq.' + encodeURIComponent(slug) + '&select=*');
     if (!results || results.length === 0) { showGroupError(); return; }
     selectedGroup = results[0];
     applyGroupBranding(selectedGroup);
@@ -2644,19 +2300,10 @@ function applyGroupBranding(group) {
 
   // Apply brand color to header and CSS variables
   if (group.brand_color) {
-    const color = group.brand_color;
-    const luminance = hexLuminance(color);
-    // If primary color is very light and secondary color exists, use secondary for header
-    const headerColor = (luminance > 0.5 && group.brand_color2) ? group.brand_color2 : color;
-    header.style.background = headerColor;
-    document.documentElement.style.setProperty('--accent', color);
-    document.documentElement.style.setProperty('--accent-dark', color);
-    document.documentElement.style.setProperty('--light', hexToRgba(color, 0.08));
-    // Logo filter — invert to white if header is dark
-    if (logo.src) {
-      const headerLum = hexLuminance(headerColor);
-      logo.style.filter = headerLum < 0.4 ? 'brightness(0) invert(1)' : 'none';
-    }
+    header.style.background = group.brand_color;
+    document.documentElement.style.setProperty('--accent', group.brand_color);
+    document.documentElement.style.setProperty('--accent-dark', group.brand_color);
+    document.documentElement.style.setProperty('--light', hexToRgba(group.brand_color, 0.08));
   }
 
   // Show group name in header subtitle
@@ -2875,32 +2522,25 @@ function toggle(cb, id) {
     }
     // ──────────────────────────────────────────────────────────
     const cfg = PRODUCT_CONFIG[id];
-    if (cfg) {
-      const isKoc = cfg.koc === 'required';
-      const hasIntake = !!cfg.intake;
-      const triggersHosting = ['w-bs','w-bb','w-bp','w-custom'].includes(id);
-
-      if (isKoc) {
-        // KOC-required: fire KOC modal first (after hosting if applicable)
-        // Intake form (if any) opens automatically after Done is clicked in KOC modal
+    if (cfg?.intake) {
+      const formKey = cfg.intake;
+      const existing = intakeData[formKey];
+      const notStarted = !existing || (
+        !existing.completed &&
+        !existing.bypassed &&
+        (!existing.fields || Object.keys(existing.fields).length === 0)
+      );
+      if (notStarted) {
+        // Don't auto-pop — let AE enter spend/notes first, then open via row button or toast
+        const triggersHosting = ['w-bs','w-bb','w-bp','w-custom'].includes(id);
         if (triggersHosting) {
-          window._pendingKocServiceId = id;
-        } else if (!globalKocSchedule) {
-          // No KOC scheduled yet — open KOC modal
-          setTimeout(() => openKocModal(id), 300);
+          window._pendingIntakeServiceId = id;
         } else {
-          // KOC already scheduled — go straight to intake if needed
-          if (hasIntake) {
-            const existing = intakeData[cfg.intake];
-            const notStarted = !existing || (!existing.completed && !existing.bypassed && (!existing.fields || Object.keys(existing.fields).length === 0));
-            if (notStarted) setTimeout(() => openIntakeForService(id), 300);
-          }
+          // Show a non-blocking toast nudge instead of forcing the modal open
+          setTimeout(() => {
+            showToast(`📋 Intake form ready — click "Fill Out" next to ${cfg.label} when ready`);
+          }, 400);
         }
-      } else if (hasIntake) {
-        // Non-KOC product with intake — open intake directly
-        const existing = intakeData[cfg.intake];
-        const notStarted = !existing || (!existing.completed && !existing.bypassed && (!existing.fields || Object.keys(existing.fields).length === 0));
-        if (notStarted) setTimeout(() => openIntakeForService(id), 300);
       }
     }
   } else {
@@ -2908,7 +2548,6 @@ function toggle(cb, id) {
     row.classList.remove('selected');
     delete hostingChoices[id];
     window._pendingIntakeServiceId = null;
-    window._pendingKocServiceId = null;
 
     // If no other selected products use this form key, clear intake so reselect re-prompts
     const cfg = PRODUCT_CONFIG[id];
@@ -2928,7 +2567,6 @@ function toggle(cb, id) {
       setWebSectionDisabled('web-ot', false);
       setVidGroupDisabled('vid-pkg', false);
     }
-    updateKocRowBadges();
   }
   updateBadges();
   updateIntakeStatusCard(); // updates row intake buttons immediately on check/uncheck
@@ -3115,27 +2753,25 @@ function updateBadges() {
 // ── STEP NAVIGATION ───────────────────────────────────────────
 function goStep(n) {
   if (n === 3) {
-    // Check for incomplete intakes with no KOC scheduled — nudge but never block
+    // Check required intakes not yet completed and not bypassed
+    const incomplete = [];
     const needed = {};
     Object.keys(selected).forEach(id => {
       const cfg = PRODUCT_CONFIG[id];
-      if (cfg?.intake) needed[cfg.intake] = { label: cfg.label, isKoc: cfg.koc === 'required' };
+      if (cfg?.intake) needed[cfg.intake] = cfg.label;
     });
-    const noKocIncomplete = [];
-    Object.entries(needed).forEach(([formKey, {label}]) => {
+    Object.entries(needed).forEach(([formKey, label]) => {
       const d = intakeData[formKey];
-      const incomplete = !d || (!d.completed && !d.bypassed);
-      const noKoc = !globalKocSchedule;
-      if (incomplete && noKoc) noKocIncomplete.push(label);
+      if (!d || (!d.completed && !d.bypassed)) incomplete.push(label);
     });
-    if (noKocIncomplete.length > 0) {
-      const amName = selectedGroup?.am_name || 'your Account Manager';
-      showToast(`📋 Heads up — ${noKocIncomplete.length} intake form${noKocIncomplete.length > 1 ? 's are' : ' is'} incomplete with no KOC scheduled. Consider requesting ${amName}'s help.`);
+    if (incomplete.length > 0) {
+      const proceed = confirm(`The following intake forms have not been completed:\n\n• ${incomplete.join('\n• ')}\n\nYou can still proceed — you\'ll see them on the review page. Continue?`);
+      if (!proceed) return;
     }
     const missingSpend = Object.entries(selected).filter(([id,d]) => (d.cpm || d.cpc) && !d.spend);
     if (missingSpend.length > 0) {
       const names = missingSpend.map(([,d]) => d.label.split('\u2014')[1]?.trim() || d.label).join(', ');
-      showToast(`⚠ No spend entered for: ${names}`, 'error');
+      if (!confirm('No campaign spend entered for: ' + names + '.\n\nContinue anyway?')) return;
     }
     buildReview();
     updateKocCard();
@@ -3318,30 +2954,21 @@ async function submitIO() {
     const bizName = document.getElementById('biz-name').value.trim();
     if (!bizName) throw new Error('Business name is required');
 
-    // KOC date/time is collected during intake or Step 3
-    const kocDate = document.getElementById('koc-date-step3').value || document.getElementById('koc-date').value;
-    const kocTime = document.getElementById('koc-time-step3').value || document.getElementById('koc-time').value;
+    // KOC date/time is collected during intake or Step 3 — not required to block submission
+    const kocDate = document.getElementById('koc-date')?.value || '';
+    const kocTime = document.getElementById('koc-time')?.value || '';
 
-    const amName = selectedGroup?.am_name || 'your Account Manager';
-
-    // ── Hard failsafe: KOC required but not scheduled ──────────
-    const kocProducts = Object.keys(selected).filter(id => PRODUCT_CONFIG[id]?.koc === 'required');
-    if (kocProducts.length > 0 && !globalKocSchedule && !kocDate) {
-      const labels = kocProducts.map(id => PRODUCT_CONFIG[id]?.label).join(', ');
-      throw new Error(`A Kick-Off Call with ${amName} is required before submitting. Please schedule one for: ${labels}`);
-    }
-
-    // ── Hard failsafe: incomplete intakes with no KOC scheduled ─
+    // Check for incomplete required intakes (non-bypassed)
+    const incompleteIntakes = [];
     const needed = {};
     Object.keys(selected).forEach(id => { const cfg = PRODUCT_CONFIG[id]; if (cfg?.intake) needed[cfg.intake] = cfg.label; });
-    const incompleteNoKoc = [];
     Object.entries(needed).forEach(([formKey, label]) => {
       const d = intakeData[formKey];
-      const incomplete = !d || (!d.completed && !d.bypassed);
-      if (incomplete && !globalKocSchedule && !kocDate) incompleteNoKoc.push(label);
+      if (!d || (!d.completed && !d.bypassed)) incompleteIntakes.push(label);
     });
-    if (incompleteNoKoc.length > 0) {
-      throw new Error(`The following intake forms are incomplete with no Kick-Off Call scheduled:\n• ${incompleteNoKoc.join('\n• ')}\n\nPlease complete them or schedule a call with ${amName}.`);
+    if (incompleteIntakes.length > 0) {
+      const proceed = confirm(`These intake forms are not yet complete:\n\n• ${incompleteIntakes.join('\n• ')}\n\nSubmit anyway? The AM will be notified to follow up.`);
+      if (!proceed) { btn.innerHTML = '✓ Submit Insertion Order'; btn.disabled = false; return; }
     }
 
     // Determine tier from social media selection
@@ -3409,7 +3036,7 @@ async function submitIO() {
       campaign_notes: document.getElementById('campaign-notes').value,
       koc_date: kocDate || null,
       koc_time: kocTime || null,
-      needs_koc: kocProducts.length > 0,
+      needs_koc: needsKoc,
       total_onetime: oneTime,
       total_monthly: monthly,
       signer_name: document.getElementById('auth-name').value,
@@ -3750,10 +3377,12 @@ ${intakeDesc}`;
 
 // ── ADMIN AUTH ─────────────────────────────────────────────────
 const ADMIN_USERS = {
-  'jon':    { email:'jon@44idigital.com',   pw:'jon44i',    canEditPricing:true  },
-  'james':  { email:'james@44idigital.com', pw:'james44i',  canEditPricing:true  },
+  'carol':  { email:'carol@44idigital.com',  pw:'carol44i'   },
+  'peggy':  { email:'peggy@44idigital.com',  pw:'peggy44i'   },
+  'darren': { email:'darren@44i.com',        pw:'darren44i'  },
+  'jon':    { email:'jon@44idigital.com',    pw:'jon44i'     },
+  'james':  { email:'james@44idigital.com',  pw:'james44i'   },
 };
-let currentAdminUser = null;
 // NOTE: Change passwords in Supabase groups table or via admin panel before launch
 const ADMIN_ORG = '44i Digital';
 
@@ -3772,9 +3401,7 @@ function closeAdminLogin() {
 function checkAdminPw() {
   const pw = document.getElementById('admin-pw-input').value;
   const match = Object.values(ADMIN_USERS).find(u => u.pw === pw);
-  const matchKey = Object.entries(ADMIN_USERS).find(([,u]) => u.pw === pw)?.[0];
   if (match) {
-    currentAdminUser = { ...match, key: matchKey };
     closeAdminLogin();
     showAdmin(true);
   } else {
@@ -3784,52 +3411,7 @@ function checkAdminPw() {
   }
 }
 
-function updateLogoPreview(url) {
-  const preview = document.getElementById('admin-logo-preview');
-  const img = document.getElementById('admin-logo-img');
-  if (url && url.startsWith('http')) {
-    img.src = url;
-    preview.style.display = 'block';
-    img.onerror = () => preview.style.display = 'none';
-    img.onload = () => {
-      const color = document.getElementById('admin-color-hex').value || '#ffffff';
-      const lum = hexLuminance(color);
-      img.style.filter = lum > 0.5 ? 'invert(1)' : '';
-      preview.style.background = lum > 0.5 ? color : '#f9fafb';
-    };
-  } else {
-    preview.style.display = 'none';
-  }
-}
-
-let adminRecipients = [];
-
-function renderRecipientTags() {
-  const container = document.getElementById('admin-recipients-tags');
-  if (!container) return;
-  container.innerHTML = adminRecipients.map((email, i) =>
-    `<span style="display:inline-flex;align-items:center;gap:5px;background:var(--light);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--text)">
-      ${email}
-      <button onclick="removeRecipientTag(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:0;margin-left:2px">×</button>
-    </span>`
-  ).join('');
-}
-
-function addRecipientTag(val) {
-  const email = val.trim().replace(/,/g,'');
-  if (!email || !email.includes('@')) return;
-  if (!adminRecipients.includes(email)) {
-    adminRecipients.push(email);
-    renderRecipientTags();
-  }
-}
-
-function removeRecipientTag(i) {
-  adminRecipients.splice(i, 1);
-  renderRecipientTags();
-}
-
-
+// ── AUTO SLUG ──────────────────────────────────────────────────
 function generateSlug(name) {
   return name.trim()
     .split(/\s+/)
@@ -4012,11 +3594,7 @@ function showAdmin(show) {
   });
   document.getElementById('page-admin').style.display = show ? 'block' : 'none';
   document.getElementById('steps-nav') && (document.getElementById('steps-nav').style.display = show ? 'none' : 'flex');
-  if (show) {
-    const label = document.getElementById('admin-user-label');
-    if (label) label.textContent = currentAdminUser ? `Logged in as ${currentAdminUser.key}` : '';
-    loadAdminGroups();
-  }
+  if (show) loadAdminGroups();
   else {
     // Restore current step
     document.getElementById('page-' + currentStep).style.display = 'block';
@@ -4027,7 +3605,7 @@ function showAdmin(show) {
 
 async function loadAdminGroups() {
   try {
-    allGroups = await sb('groups?order=name&select=id,name,io_slug,am_name,am_email,am_calendar_url,brand_color,brand_color2,logo_url,trello_board_id,trello_email,io_recipient,has_koc,from_name,from_email,io_pricing,portal_domain') || [];
+    allGroups = await sb('groups?order=name&select=*') || [];
     renderAdminGroups();
   } catch(e) {
     showToast('Error loading groups: ' + e.message, 'error');
@@ -4036,53 +3614,38 @@ async function loadAdminGroups() {
 
 function renderAdminGroups() {
   const el = document.getElementById('admin-groups-table');
-  const countEl = document.getElementById('admin-group-count');
-  if (countEl) countEl.textContent = `(${allGroups.length})`;
   if (!allGroups.length) {
     el.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No groups yet. Click + New Group to add one.</p>';
     return;
   }
-  const canPrice = currentAdminUser?.canEditPricing;
   el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
-    <thead><tr style="background:var(--light);border-bottom:2px solid var(--border)">
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;width:280px">Group</th>
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Slug</th>
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Account Manager</th>
-      ${canPrice ? `<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Pricing</th>` : ''}
-      <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">IO Recipients</th>
-      <th style="padding:10px 14px"></th>
+    <thead><tr style="background:var(--light)">
+      <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Group</th>
+      <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Slug</th>
+      <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Account Manager</th>
+      <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Pricing</th>
+      <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Trello</th>
+      <th style="padding:9px 12px"></th>
     </tr></thead>
     <tbody>${allGroups.map(g => {
       const overrideCount = g.io_pricing ? Object.keys(typeof g.io_pricing === 'string' ? JSON.parse(g.io_pricing) : g.io_pricing).length : 0;
       const pricingBadge = overrideCount > 0
         ? `<span style="font-size:10px;font-weight:600;background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:12px">${overrideCount} override${overrideCount>1?'s':''}</span>`
         : `<span style="font-size:10px;color:var(--muted)">Standard</span>`;
-      const recipients = g.io_recipient ? g.io_recipient.split(',').map(e => e.trim()).filter(Boolean) : [];
-      const recipientDisplay = recipients.length
-        ? recipients.slice(0,2).map(r => `<span style="font-size:10px;background:var(--light);border:1px solid var(--border);border-radius:10px;padding:2px 7px;color:var(--text);white-space:nowrap">${r}</span>`).join(' ') + (recipients.length > 2 ? ` <span style="font-size:10px;color:var(--muted)">+${recipients.length-2} more</span>` : '')
-        : '<span style="font-size:10px;color:var(--muted)">—</span>';
-      return `<tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='var(--light)'" onmouseout="this.style.background=''">
-        <td style="padding:12px 14px">
-          <div style="display:flex;align-items:center;gap:10px">
-            ${g.logo_url ? `<img src="${g.logo_url}" style="height:28px;width:60px;object-fit:contain;border-radius:4px;border:1px solid var(--border);padding:2px;background:${g.brand_color2||'#fff'};flex-shrink:0" onerror="this.style.display='none'"/>` : `<div style="width:28px;height:28px;border-radius:6px;background:${g.brand_color||'#1C9BD7'};flex-shrink:0"></div>`}
-            <div>
-              <div style="font-weight:700;color:var(--text)">${g.name}</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:1px">${g.from_email||''}</div>
-            </div>
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${g.brand_color||'#1C9BD7'};flex-shrink:0"></div>
+            <strong>${g.name}</strong>
           </div>
         </td>
-        <td style="padding:12px 14px;font-family:monospace;font-size:12px;color:var(--accent)">${g.io_slug||'—'}</td>
-        <td style="padding:12px 14px">
-          <div style="font-size:13px;font-weight:600;color:var(--text)">${g.am_name||'—'}</div>
-          <div style="font-size:11px;color:var(--muted)">${g.am_email||''}</div>
-        </td>
-        ${canPrice ? `<td style="padding:12px 14px">${pricingBadge}</td>` : ''}
-        <td style="padding:12px 14px"><div style="display:flex;flex-wrap:wrap;gap:4px">${recipientDisplay}</div></td>
-        <td style="padding:12px 14px;text-align:right;white-space:nowrap">
-          <div style="display:flex;gap:6px;justify-content:flex-end">
-            <button onclick="adminEditGroup('${g.id}')" style="padding:5px 14px;border-radius:6px;background:var(--light);border:1px solid var(--border);font-size:12px;cursor:pointer;font-weight:600;color:var(--text)">Edit</button>
-            ${canPrice ? `<button onclick="adminEditGroup('${g.id}');setTimeout(()=>adminTab('pricing'),200)" style="padding:5px 14px;border-radius:6px;background:#EFF6FF;border:1px solid #BFDBFE;color:#1d4ed8;font-size:12px;cursor:pointer;font-weight:600">Pricing</button>` : ''}
-          </div>
+        <td style="padding:10px 12px;color:var(--muted);font-family:monospace">${g.io_slug||'—'}</td>
+        <td style="padding:10px 12px;color:var(--muted)">${g.am_name||'—'}<br><span style="font-size:11px">${g.am_email||''}</span></td>
+        <td style="padding:10px 12px">${pricingBadge}</td>
+        <td style="padding:10px 12px;color:var(--muted);font-size:11px;font-family:monospace">${g.trello_board_id ? g.trello_board_id.slice(0,8)+'...' : '—'}</td>
+        <td style="padding:10px 12px;text-align:right;display:flex;gap:6px;justify-content:flex-end">
+          <button onclick="adminEditGroup('${g.id}')" style="padding:5px 12px;border-radius:6px;background:var(--light);border:1px solid var(--border);font-size:12px;cursor:pointer;font-weight:600">Edit</button>
+          <button onclick="adminEditGroup('${g.id}');setTimeout(()=>adminTab('pricing'),200)" style="padding:5px 12px;border-radius:6px;background:#EFF6FF;border:1px solid #BFDBFE;color:#1d4ed8;font-size:12px;cursor:pointer;font-weight:600">Pricing</button>
         </td>
       </tr>`;
     }).join('')}
@@ -4093,20 +3656,15 @@ function renderAdminGroups() {
 function adminNewGroup() {
   document.getElementById('admin-form-title').textContent = 'New Group';
   document.getElementById('admin-group-id').value = '';
-  ['admin-name','admin-slug','admin-am-name','admin-am-email','admin-logo','admin-trello','admin-portal-domain','admin-from-name','admin-from-email','admin-color-hex','admin-color2-hex'].forEach(id => {
+  ['admin-name','admin-slug','admin-am-name','admin-am-email','admin-logo','admin-trello','admin-portal-domain','admin-from-name','admin-from-email','admin-color-hex'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('admin-color').value = '#1C9BD7';
   document.getElementById('admin-color-hex').value = '#1C9BD7';
-  document.getElementById('admin-color2').value = '#000000';
-  document.getElementById('admin-color2-hex').value = '';
   const sf = document.getElementById('admin-slug'); if(sf) { sf.dataset.manuallyEdited=''; }
   const sp = document.getElementById('slug-preview'); if(sp) sp.textContent = '...';
   const pf = document.getElementById('admin-portal-domain'); if(pf) { pf.value = BASE_PORTAL_DOMAIN; pf.dataset.manuallyEdited=''; }
   currentPricingOverrides = {};
-  adminRecipients = [];
-  renderRecipientTags();
-  updateLogoPreview('');
   adminTab('info');
   document.getElementById('admin-group-form').style.display = 'block';
   document.getElementById('admin-group-form').scrollIntoView({behavior:'smooth'});
@@ -4126,18 +3684,11 @@ function adminEditGroup(id) {
   document.getElementById('admin-am-email').value = g.am_email || '';
   document.getElementById('admin-color').value = g.brand_color || '#1C9BD7';
   document.getElementById('admin-color-hex').value = g.brand_color || '#1C9BD7';
-  document.getElementById('admin-color2').value = g.brand_color2 || '#000000';
-  document.getElementById('admin-color2-hex').value = g.brand_color2 || '';
   document.getElementById('admin-logo').value = g.logo_url || '';
   document.getElementById('admin-trello').value = g.trello_board_id || '';
   document.getElementById('admin-portal-domain').value = g.portal_domain || '';
   document.getElementById('admin-from-name').value = g.from_name || '';
   document.getElementById('admin-from-email').value = g.from_email || '';
-  // Logo preview
-  updateLogoPreview(g.logo_url || '');
-  // IO Recipients
-  adminRecipients = g.io_recipient ? g.io_recipient.split(',').map(e => e.trim()).filter(Boolean) : [];
-  renderRecipientTags();
   // Load existing pricing overrides
   currentPricingOverrides = {};
   if (g.io_pricing) {
@@ -4161,13 +3712,8 @@ async function adminSaveGroup() {
   const slug = document.getElementById('admin-slug').value.toLowerCase().replace(/[^a-z0-9-]/g,'');
   if (!document.getElementById('admin-name').value.trim()) { showToast('Group name is required','error'); return; }
   if (!slug) { showToast('IO Slug is required','error'); return; }
-  if (!document.getElementById('admin-am-name').value.trim()) { showToast('Account Manager name is required — it appears in all AE-facing messaging','error'); return; }
 
-  // Pricing changes require Jon or James
-  if (Object.keys(currentPricingOverrides).length > 0 && !currentAdminUser?.canEditPricing) {
-    showToast('Pricing overrides require Jon or James login', 'error');
-    return;
-  }
+  // Validate white-label fields
   const fromName = document.getElementById('admin-from-name').value.trim();
   const fromEmail = document.getElementById('admin-from-email').value.trim();
   if (!fromName) { showToast('From Name is required — this appears on all client emails','error'); adminTab('info'); return; }
@@ -4178,14 +3724,12 @@ async function adminSaveGroup() {
     io_slug: slug,
     am_name: document.getElementById('admin-am-name').value.trim(),
     am_email: document.getElementById('admin-am-email').value.trim(),
-    brand_color: document.getElementById('admin-color-hex').value.trim() || document.getElementById('admin-color').value,
-    brand_color2: document.getElementById('admin-color2-hex').value.trim() || null,
+    brand_color: document.getElementById('admin-color').value,
     logo_url: document.getElementById('admin-logo').value.trim(),
     trello_board_id: document.getElementById('admin-trello').value.trim(),
     portal_domain: document.getElementById('admin-portal-domain').value.trim(),
     from_name: fromName,
     from_email: fromEmail,
-    io_recipient: adminRecipients.join(', ') || null,
     io_pricing: Object.keys(currentPricingOverrides).length > 0 ? currentPricingOverrides : null,
   };
 
@@ -4432,7 +3976,6 @@ function resetForm() {
   hostingChoices = {};
   globalKocSchedule = null;
   currentIntakeServiceId = null;
-  document.querySelectorAll('.koc-row-badge').forEach(el => el.remove());
   setVidGroupDisabled('vid-pkg', false);
   setVidGroupDisabled('wm-vid-pkg', false);
   setWebSectionDisabled('web-ot', false);
