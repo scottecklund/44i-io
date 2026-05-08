@@ -2196,8 +2196,8 @@ async function loadGroup() {
   const slug = getSlug();
   const isProd = window.location.hostname.includes('yourdigitalgroupresources.com');
 
-  // No slug → dev mode picker; slug always queries Supabase
-  if (!slug) {
+  // Local file or no slug → dev picker; production with slug → Supabase
+  if (!slug || !isProd) {
     showDevModePicker();
     return;
   }
