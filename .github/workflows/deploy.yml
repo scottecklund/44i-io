@@ -13,6 +13,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Inject build timestamp
+        run: |
+          TIMESTAMP=$(date +%s)
+          sed -i "s|</head>|<meta name=\"build-ts\" content=\"$TIMESTAMP\">\n</head>|" io.html
+
       - name: Deploy to io.yourdigitalgroupresources.com
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
