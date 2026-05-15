@@ -914,9 +914,8 @@ textarea{resize:vertical;min-height:70px}
 <!-- ADMIN PANEL -->
 <div id="page-admin" style="display:none">
   <div class="card">
-    <div class="card-head" style="background:var(--accent)">
-      <h3 style="color:#fff">⚙️ Group Administration</h3>
-      <button onclick="showAdmin(false)" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">✕ Close</button>
+    <div style="display:flex;justify-content:flex-end;padding:10px 16px;border-bottom:1px solid var(--border);background:#FAFCFE">
+      <button onclick="showAdmin(false)" style="background:var(--light);border:1px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">✕ Close</button>
     </div>
     <div style="padding:20px">
 
@@ -3306,97 +3305,103 @@ async function submitIO() {
     const orderResult = await orderRes.json();
     const orderId = orderResult?.order_id;
 
-    // 2. Build Trello list + copy template cards for each tactic
+    // 2. Build Trello board
     if (selectedGroup.trello_board_id) {
       try {
-        const seoTier = selected['seo-bp'] ? 'pro' : selected['seo-bb'] ? 'builder' : 'starter';
+        showToast('Setting up Trello…', 'info');
 
-        // ── TACTIC MAP: workflow → exact template list name patterns ──
-        // Using name patterns (not IDs) so it works across all group boards
-        // that have copied the templates. Patterns must ALL appear (case-insensitive).
-        // Source of truth: Claude Test Board (nuGQ2WSB)
+        const aeName   = document.getElementById('ae-name').value.trim();
+        const aeTrello = document.getElementById('ae-trello').value.trim();
+        const amTrello = selectedGroup.am_trello_handle || '';
+
+        // ── TACTIC MAP: workflow → template list name patterns ──
+        // null = no template, create a plain card instead
+        const seoTier = selected['seo-bp'] ? 'pro' : selected['seo-bb'] ? 'builder' : 'starter';
         const TACTIC_MAP = {
-          'Social Media Management':  ['template'],
-          'SEO/AEO':                  ['seo', seoTier],         // Starter/Builder/Pro
-          'Email Marketing':          null,
-          'Reputation Management':    null,
+          'Website (1-page)':           ['website', '1 page'],
+          'Website (5-page)':           ['website', '5 page'],
+          'Website (10-page)':          ['website', '10 page'],
+          'SEO/AEO':                    ['seo', 'packages', seoTier],
+          'Social Media Management':    null,
+          'Targeted Landing Pages':     null,
+          'Email Marketing':            null,
+          'Reputation Management':      null,
           'Local Listing Optimization': null,
-          'Google Business Profile':  null,
-          'Digital Advertising':      null,
-          'Search Engine Marketing':  null,
-          'Social Media Ads':         null,
-          'Location Targeting':       null,
-          'Video Advertising':        null,
-          'Streaming TV/OTT/CTV':     null,
-          'Audio/Mobile/Display':     null,
-          'Website (1-page)':         ['website', '1 page'],
-          'Website (5-page)':         ['website', '5 page'],
-          'Website (10-page)':        ['website', '10 page'],
-          'White Label Onboarding':   ['white label', 'onboarding'],
+          'Google Business Profile':    null,
+          'Digital Advertising':        null,
+          'Search Engine Marketing':    null,
+          'Social Media Ads':           null,
+          'Location Targeting':         null,
+          'Video Advertising':          null,
+          'Streaming TV/OTT/CTV':       null,
+          'Audio/Mobile/Display':       null,
         };
 
-        // ── AE Questions card: populate with intake form answers ──
-        // The "*AE* Questions Here - *Client*" card in each template list
-        // receives the intake form data for that tactic
-        const buildAECardDesc = (workflowName) => {
-          // Map workflow names to intake form keys
-          const wfToIntake = {
-            'SEO/AEO':                 'seo',
-            'Social Media Management': null,   // no AE intake — KOC only
-            'Email Marketing':         'email',
-            'Google Business Profile': 'gbp',
-            'Website (1-page)':        null,   // KOC only
-            'Website (5-page)':        null,
-            'Website (10-page)':       null,
-          };
-          const formKey = wfToIntake[workflowName];
-          const data = formKey ? intakeData[formKey] : null;
-          if (!data) return null;
-          if (data.bypassed) {
-            return `⚠️ **AM Help Requested**\nThe AE has requested AM assistance with this intake.\n${data.bypassNote ? 'Note: ' + data.bypassNote : ''}`;
+        // ── Resolve website workflow name ──
+        const soldWorkflows = [...workflows].map(wf => {
+          if (wf === 'Website') {
+            if (selected['w-bp'] || selected['wm-10p'] || selected['wm-ecomm']) return 'Website (10-page)';
+            if (selected['w-bb'] || selected['wm-5p'])  return 'Website (5-page)';
+            return 'Website (1-page)';
           }
-          if (!data.fields || Object.keys(data.fields).length === 0) return null;
-          const lines = Object.entries(data.fields)
+          return wf;
+        });
+
+        // ── Map intake form data to a tactic name ──
+        const WORKFLOW_TO_INTAKE = {
+          'Website (1-page)':           'sm',
+          'Website (5-page)':           'sm',
+          'Website (10-page)':          'sm',
+          'SEO/AEO':                    'seo',
+          'Social Media Management':    'sm',
+          'Targeted Landing Pages':     'tlp',
+          'Email Marketing':            'email',
+          'Reputation Management':      'reputation',
+          'Local Listing Optimization': 'llo',
+          'Google Business Profile':    'gbp',
+          'Digital Advertising':        'display',
+          'Search Engine Marketing':    'sem',
+          'Social Media Ads':           'fbig',
+          'Location Targeting':         'geofence',
+          'Video Advertising':          'youtube',
+          'Streaming TV/OTT/CTV':       'streamingtv',
+          'Audio/Mobile/Display':       'audio',
+        };
+
+        const buildIntakeDesc = (wf) => {
+          const formKey = WORKFLOW_TO_INTAKE[wf];
+          if (!formKey) return '';
+          const data = intakeData[formKey];
+          if (!data) return '';
+          if (data.bypassed) return `⚠️ AM Help Requested${data.bypassNote ? ': ' + data.bypassNote : ''}`;
+          if (!data.fields || !Object.keys(data.fields).length) return '';
+          return Object.entries(data.fields)
             .filter(([,v]) => v)
             .map(([k,v]) => `**${k.replace(/_/g,' ')}:** ${v}`)
             .join('\n');
-          return lines ? `**Intake Form — ${workflowName}**\n\n${lines}` : null;
         };
 
-        // Build Trello card description with intake data + KOC + hosting notes
+        // ── IO card description ──
         const servicesDesc = lineItems.map(li => {
           let line = `• ${li.label}`;
           if (li.fee > 0) line += ` — $${li.fee.toLocaleString()} one-time`;
           if (li.recurring > 0) line += ` — $${li.recurring.toLocaleString()}/mo`;
           if (li.spend > 0) line += ` — $${li.spend.toLocaleString()}/mo spend`;
-          if (li.prorated_hosting_amt) line += ` | Prorated hosting: $${li.prorated_hosting_amt.toFixed(2)}`;
+          if (li.prorated_hosting_amt) line += ` | Prorated: $${li.prorated_hosting_amt.toFixed(2)}`;
           if (li.notes) line += `\n  Notes: ${li.notes}`;
           return line;
         }).join('\n');
-
-        // Intake summary for Trello
-        let intakeDesc = '';
-        Object.entries(intakeData).forEach(([formKey, data]) => {
-          const formDef = INTAKE_FORMS[formKey];
-          if (!formDef) return;
-          intakeDesc += `\n\n**${formDef.title}**\n`;
-          if (data.bypassed) {
-            intakeDesc += `⚠️ AM Help Requested — ${data.bypassNote || 'AE requested AM assistance'}`;
-          } else if (data.fields) {
-            Object.entries(data.fields).forEach(([k,v]) => { if (v) intakeDesc += `${k}: ${v}\n`; });
-          }
-        });
 
         const ioDesc = `**Client:** ${bizName}
 **Contact:** ${document.getElementById('contact-name').value}
 **Email:** ${document.getElementById('contact-email').value}
 **Phone:** ${document.getElementById('contact-phone').value}
 **City:** ${document.getElementById('city').value}
-**AE:** ${document.getElementById('ae-name').value}
-**KOC:** ${kocDate||'—'} ${kocTime||''}
-**Campaign Start:** ${document.getElementById('campaign-start').value}
-**Campaign Length:** ${document.getElementById('campaign-length').value || '—'} Months
-**Campaign Notes:** ${document.getElementById('campaign-notes').value || 'None'}
+**AE:** ${aeName}${aeTrello ? ' (' + aeTrello + ')' : ''}
+**KOC:** ${kocDate||'—'}${kocTime ? ' at ' + kocTime : ''}
+**Campaign Start:** ${document.getElementById('campaign-start').value||'—'}
+**Campaign Length:** ${document.getElementById('campaign-length').value||'—'} Months
+**Campaign Notes:** ${document.getElementById('campaign-notes').value||'None'}
 
 **Services Sold:**
 ${servicesDesc}
@@ -3404,14 +3409,10 @@ ${servicesDesc}
 **One-Time Total:** $${oneTime.toLocaleString()}
 **Monthly Recurring:** $${monthly.toLocaleString()}/mo
 
-**Workflows:** ${[...workflows].join(', ')||'None'}
-**Special Instructions:** ${document.getElementById('special-instructions')?.value || 'None'}
-${intakeDesc}`;
+**Special Instructions:** ${document.getElementById('special-instructions')?.value||'None'}
+${amTrello ? '\nAM: ' + amTrello : ''}${aeTrello ? '\nAE: ' + aeTrello : ''}`.slice(0, 16000);
 
-        const ioDescTrunc = ioDesc.slice(0, 16000); // Trello card desc limit
-
-        // ── Step 1: Get all lists on the board ────────────────
-        showToast('Setting up Trello…', 'info');
+        // ── Step 1: Get all lists on the board ──
         const listsRes = await fetch(PROXY, {
           method: 'POST',
           headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
@@ -3420,195 +3421,139 @@ ${intakeDesc}`;
         const allLists = await listsRes.json();
         if (!Array.isArray(allLists)) throw new Error('Could not fetch board lists');
 
-        // ── Step 2: Match sold tactics to template lists ──────
-        // ── Build list of workflows to match, with website size resolution ──
-        const soldWorkflows = [...workflows].map(wf => {
-          if (wf === 'Website') {
-            // Resolve website size from selected service IDs
-            // One-time: w-bp=10page, w-bb=5page, w-bs=1page
-            // Monthly:  wm-10p, wm-5p, wm-1p
-            if (selected['w-bp'] || selected['wm-10p'] || selected['wm-ecomm']) return 'Website (10-page)';
-            if (selected['w-bb'] || selected['wm-5p'])  return 'Website (5-page)';
-            return 'Website (1-page)';
-          }
-          return wf;
-        });
-        const matchedListIds = new Set();
-
-        for (const wf of soldWorkflows) {
-          // Direct lookup — null = no template list for this tactic (skip silently)
-          const patterns = Object.prototype.hasOwnProperty.call(TACTIC_MAP, wf) ? TACTIC_MAP[wf] : undefined;
-          if (patterns === null)      { console.log('No template list for:', wf); continue; }
-          if (patterns === undefined) { console.warn('Unmapped workflow:', wf);   continue; }
-
-          // Find lists whose names match ALL patterns
-          const matchingList = allLists.find(l => {
-            const name = l.name.toLowerCase();
-            return patterns.every(p => name.includes(p.toLowerCase()));
-          });
-          if (matchingList) {
-            matchedListIds.add(matchingList.id);
-            console.log(`Matched "${wf}" → list "${matchingList.name}"`);
-          } else {
-            console.warn(`No template list found for "${wf}"`);
-          }
-        }
-
-        if (matchedListIds.size === 0) {
-          showToast('No matching template lists found for selected tactics', 'error');
+        // ── Step 2: Find existing client list or create new ──
+        const existingList = allLists.find(l => l.name.toLowerCase() === bizName.toLowerCase());
+        let clientList;
+        if (existingList) {
+          clientList = existingList;
+          console.log('Found existing list:', clientList.name);
         } else {
-          // ── Step 3: Create new client list ───────────────────
-          const aeName = document.getElementById('ae-name').value.trim().split(' ')[0]; // first name only
-          const listName = bizName + (aeName ? ' - ' + aeName : '');
           const newListRes = await fetch(PROXY, {
             method: 'POST',
             headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
-            body: JSON.stringify({ target: 'trello_create_list', board_id: selectedGroup.trello_board_id, name: listName, pos: 'top' })
+            body: JSON.stringify({ target: 'trello_create_list', board_id: selectedGroup.trello_board_id, name: bizName, pos: 'top' })
           });
-          const newList = await newListRes.json();
-          if (!newList.id) throw new Error('Failed to create client list: ' + JSON.stringify(newList));
-          console.log('Created list:', newList.name, newList.id);
+          clientList = await newListRes.json();
+          if (!clientList.id) throw new Error('Failed to create client list');
+          console.log('Created new list:', clientList.name);
+        }
 
-          // ── Step 4: Copy template cards into client list ──────
-          let ioCardId = null;
-          let totalCopied = 0;
-          // Track AE Questions cards per workflow so we can update with intake data
-          const aeCardsByWorkflow = {};
+        // ── Step 3: Get existing cards in the list ──
+        const existingCardsRes = await fetch(PROXY, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
+          body: JSON.stringify({ target: 'trello_get_list_cards', list_id: clientList.id })
+        });
+        const existingCards = await existingCardsRes.json();
+        const existingCardNames = Array.isArray(existingCards)
+          ? existingCards.map(c => c.name.toLowerCase())
+          : [];
 
-          for (const templateListId of matchedListIds) {
-            // Determine which workflow this template list serves (for AE card injection)
-            const matchedWf = soldWorkflows.find(wf => {
-              const patterns = TACTIC_MAP[wf];
-              if (!patterns) return false;
-              const listObj = allLists.find(l => l.id === templateListId);
-              if (!listObj) return false;
-              const name = listObj.name.toLowerCase();
+        // ── Step 4: Create or update IO card ──
+        const existingIoCard = Array.isArray(existingCards)
+          ? existingCards.find(c => /^io$/i.test(c.name.trim()))
+          : null;
+
+        if (existingIoCard) {
+          // Update existing IO card
+          await fetch(PROXY, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
+            body: JSON.stringify({ target: 'trello_update_card', card_id: existingIoCard.id, desc: ioDesc })
+          });
+          console.log('Updated existing IO card');
+        } else {
+          // Create new IO card at top
+          await fetch(PROXY, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
+            body: JSON.stringify({ target: 'trello_create_card', list_id: clientList.id, name: 'IO', desc: ioDesc, pos: 'top' })
+          });
+          console.log('Created IO card');
+        }
+
+        // ── Step 5: Add tactic cards for new products only ──
+        let cardsAdded = 0;
+
+        for (const wf of soldWorkflows) {
+          const patterns = TACTIC_MAP[wf];
+          const intakeDesc = buildIntakeDesc(wf);
+
+          if (patterns) {
+            // Has template — find matching template list
+            const templateList = allLists.find(l => {
+              const name = l.name.toLowerCase();
               return patterns.every(p => name.includes(p.toLowerCase()));
             });
 
-            // Get cards from this template list
-            const cardsRes = await fetch(PROXY, {
-              method: 'POST',
-              headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
-              body: JSON.stringify({ target: 'trello_get_list_cards', list_id: templateListId })
-            });
-            const templateCards = await cardsRes.json();
-            if (!Array.isArray(templateCards)) continue;
-
-            for (const card of templateCards) {
-              // Skip test cards
-              if (card.name.startsWith('🧪')) { console.log('Skipping test card:', card.name); continue; }
-
-              const cn = card.name.trim();
-              let newCardName;
-              let extraDesc = null;
-
-              if (/^\*AE\*/i.test(cn)) {
-                // "*AE* Questions Here - *Client*" → "AE First Name Questions Here - Business Name"
-                newCardName = aeName + ' Questions Here - ' + bizName;
-                // Inject intake form data as the card description
-                if (matchedWf) {
-                  const intakeText = buildAECardDesc(matchedWf);
-                  if (intakeText) extraDesc = intakeText;
-                }
-              } else if (/^IO\s*[-—]?\s*$/i.test(cn) || cn.toLowerCase() === 'io') {
-                newCardName = 'IO — ' + bizName;
-              } else if (cn.endsWith(' -') || cn.endsWith(' —')) {
-                // "Website Monthly Package: 1-page Custom -" → append client name
-                newCardName = cn + ' ' + bizName;
-                // For website cards, inject domain/access from intake
-                if (/website monthly package/i.test(cn)) {
-                  const siteIntake = intakeData['seo']?.fields || {};
-                  const websiteUrl = document.getElementById('website-url').value;
-                  extraDesc = `**Domain:** ${websiteUrl || '—'}\n**Access:** ${siteIntake.website_login || '—'}`;
-                }
-              } else {
-                newCardName = cn + ' - ' + bizName;
-              }
-
-              const copyPayload = { target: 'trello_copy_card', card_id: card.id, list_id: newList.id, name: newCardName };
-              const copyRes = await fetch(PROXY, {
+            if (templateList) {
+              // Get template cards
+              const tCardsRes = await fetch(PROXY, {
                 method: 'POST',
                 headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
-                body: JSON.stringify(copyPayload)
+                body: JSON.stringify({ target: 'trello_get_list_cards', list_id: templateList.id })
               });
-              const copied = await copyRes.json();
-              if (copied.id) {
-                totalCopied++;
-                if (!ioCardId && /^IO/i.test(newCardName)) ioCardId = copied.id;
-                // Update AE Questions card with intake desc if we have one
-                if (extraDesc && /Questions Here/i.test(newCardName)) {
-                  await fetch(PROXY, {
-                    method: 'POST',
-                    headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
-                    body: JSON.stringify({ target: 'trello_update_card', card_id: copied.id, desc: extraDesc.slice(0, 16000) })
-                  });
-                }
-                // Update website card desc with domain/access
-                if (extraDesc && /Website Monthly Package/i.test(newCardName)) {
-                  await fetch(PROXY, {
-                    method: 'POST',
-                    headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
-                    body: JSON.stringify({ target: 'trello_update_card', card_id: copied.id, desc: extraDesc })
-                  });
-                }
+              const templateCards = await tCardsRes.json();
+              if (!Array.isArray(templateCards)) continue;
+
+              for (const card of templateCards) {
+                if (card.name.startsWith('🧪')) continue; // skip test cards
+                const cn = card.name.trim();
+                // Skip IO and AE Questions cards from template
+                if (/^io$/i.test(cn) || /^\*AE\*/i.test(cn) || /^AE Questions/i.test(cn)) continue;
+                // Skip if card with this name already exists
+                if (existingCardNames.includes(cn.toLowerCase())) continue;
+
+                await fetch(PROXY, {
+                  method: 'POST',
+                  headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
+                  body: JSON.stringify({ target: 'trello_copy_card', card_id: card.id, list_id: clientList.id, name: cn, pos: 'bottom' })
+                });
+                cardsAdded++;
+              }
+            } else {
+              // Template list configured but not found — fall back to plain card
+              if (!existingCardNames.includes(wf.toLowerCase())) {
+                await fetch(PROXY, {
+                  method: 'POST',
+                  headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
+                  body: JSON.stringify({ target: 'trello_create_card', list_id: clientList.id, name: wf, desc: intakeDesc, pos: 'bottom' })
+                });
+                cardsAdded++;
               }
             }
+          } else {
+            // No template — create plain tactic card if not already there
+            if (!existingCardNames.includes(wf.toLowerCase())) {
+              await fetch(PROXY, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
+                body: JSON.stringify({ target: 'trello_create_card', list_id: clientList.id, name: wf, desc: intakeDesc, pos: 'bottom' })
+              });
+              cardsAdded++;
+            }
           }
-
-          // ── Step 5: Update the IO card with client info ───────
-          if (ioCardId) {
-            await fetch(PROXY, {
-              method: 'POST',
-              headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
-              body: JSON.stringify({
-                target: 'trello_update_card',
-                card_id: ioCardId,
-                name: 'IO — ' + bizName,
-                desc: ioDescTrunc
-              })
-            });
-          }
-
-          // ── Step 5b: Create escalation card if AM help requested ─
-          const bypassedForms = Object.entries(intakeData).filter(([,d]) => d.bypassed);
-          if (bypassedForms.length > 0) {
-            const amHandle = selectedGroup.am_trello_handle || '';
-            const escalationDesc = `🚨 **AE Needs AM Assistance**\n\n**AE:** ${document.getElementById('ae-name').value}\n**Client:** ${bizName}\n**Products needing help:**\n${bypassedForms.map(([k,d]) => `• ${INTAKE_FORMS[k]?.title||k}${d.bypassNote ? ': '+d.bypassNote : ''}`).join('\n')}\n\nPlease contact the AE to assist with intake form completion and/or kick-off call scheduling.\n\n${amHandle ? `cc: ${amHandle}` : ''}`;
-            await fetch(PROXY, {
-              method: 'POST',
-              headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
-              body: JSON.stringify({
-                target: 'trello_create_card',
-                list_id: newList.id,
-                name: `🚨 AM Help Needed — ${bizName}`,
-                desc: escalationDesc,
-                pos: 'top'
-              })
-            });
-          }
-
-          // ── Step 6: Save list ID back to client record ────────
-          if (client?.id) {
-            await sb('clients?id=eq.' + client.id, {
-              method: 'PATCH',
-              body: JSON.stringify({ trello_card_id: ioCardId || newList.id }),
-              prefer: 'return=representation'
-            });
-          }
-
-          showToast(`✅ Trello list "${listName}" created with ${totalCopied} cards`);
         }
+
+        // ── Step 6: Create AE Questions card if it doesn't exist ──
+        const hasAeCard = existingCardNames.some(n => /^ae questions$/i.test(n));
+        if (!hasAeCard) {
+          await fetch(PROXY, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY},
+            body: JSON.stringify({ target: 'trello_create_card', list_id: clientList.id, name: 'AE Questions', desc: '', pos: 'bottom' })
+          });
+        }
+
+        showToast(`✅ Trello list ready — ${cardsAdded} new card${cardsAdded !== 1 ? 's' : ''} added`);
 
       } catch(e) {
         console.warn('Trello setup failed:', e.message);
         showToast('IO submitted but Trello setup failed: ' + e.message, 'error');
       }
-    } else {
-      console.warn('No Trello board ID set for this group');
     }
 
-    // 3. Show success
+        // 3. Show success
     const chips = [...workflows].map(w => `<span class="chip green">${w}</span>`).join('');
     document.getElementById('success-chips').innerHTML = chips;
     document.getElementById('page-3').style.display = 'none';
