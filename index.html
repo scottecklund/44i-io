@@ -199,6 +199,10 @@ textarea{resize:vertical;min-height:70px}
           <label class="lbl">Digital Account Executive</label>
           <input type="text" id="ae-name" placeholder="AE full name"/>
         </div>
+        <div>
+          <label class="lbl">AE Trello Handle <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— e.g. @johndoe</span></label>
+          <input type="text" id="ae-trello" placeholder="@trellohandle"/>
+        </div>
       </div>
     </div>
 
@@ -955,14 +959,18 @@ textarea{resize:vertical;min-height:70px}
               <div><label class="lbl">Account Manager Email</label><input type="email" id="admin-am-email" placeholder="am@email.com" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-              <div><label class="lbl">Brand Color (Primary)</label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="admin-color" value="#1C9BD7" style="width:48px;height:38px;padding:2px;border-radius:7px;border:1px solid var(--border);cursor:pointer"/><input type="text" id="admin-color-hex" placeholder="#1C9BD7" style="flex:1;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:monospace" oninput="document.getElementById('admin-color').value=this.value"/></div></div>
-              <div><label class="lbl">Logo URL</label><input type="text" id="admin-logo" placeholder="https://..." style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
+              <div><label class="lbl">AM Calendar URL <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— for KOC scheduling</span></label><input type="text" id="admin-am-calendar" placeholder="https://calendar.app.google/..." style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
+              <div><label class="lbl">AM Trello Handle <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— for board tagging</span></label><input type="text" id="admin-am-trello" placeholder="@handle" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-              <div><label class="lbl">Trello Board ID</label><input type="text" id="admin-trello" placeholder="Board ID" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
-              <div><label class="lbl">Portal Domain</label><input type="text" id="admin-portal-domain" placeholder="https://review.yourgroup.com" oninput="this.dataset.manuallyEdited='1'" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
+              <div><label class="lbl">Brand Color (Primary)</label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="admin-color" value="#1C9BD7" style="width:48px;height:38px;padding:2px;border-radius:7px;border:1px solid var(--border);cursor:pointer"/><input type="text" id="admin-color-hex" placeholder="#1C9BD7" style="flex:1;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:monospace" oninput="document.getElementById('admin-color').value=this.value"/></div></div>
+              <div><label class="lbl">Brand Color 2 <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— secondary/background</span></label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="admin-color2" value="#1C9BD7" style="width:48px;height:38px;padding:2px;border-radius:7px;border:1px solid var(--border);cursor:pointer"/><input type="text" id="admin-color2-hex" placeholder="#1C9BD7" style="flex:1;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:monospace" oninput="document.getElementById('admin-color2').value=this.value"/></div></div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div><label class="lbl">Logo URL</label><input type="text" id="admin-logo" placeholder="https://..." style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
+              <div><label class="lbl">Trello Board ID</label><input type="text" id="admin-trello" placeholder="Board ID" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
               <div>
                 <label class="lbl">From Name <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— shown on client emails</span></label>
                 <input type="text" id="admin-from-name" placeholder="e.g. CF Digital Group" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/>
@@ -970,6 +978,19 @@ textarea{resize:vertical;min-height:70px}
               <div>
                 <label class="lbl">From Email <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— shown on client emails</span></label>
                 <input type="email" id="admin-from-email" placeholder="hello@cfdigital.com" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px"/>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label class="lbl">IO Recipients <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— comma-separated, notified on every submission</span></label>
+                <textarea id="admin-io-recipient" rows="2" placeholder="email1@group.com, email2@group.com" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+              </div>
+              <div>
+                <label class="lbl">Has KOC <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— enables kick-off call scheduling</span></label>
+                <select id="admin-has-koc" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px">
+                  <option value="true">Yes — KOC required for applicable products</option>
+                  <option value="false">No — skip KOC for all products</option>
+                </select>
               </div>
             </div>
             <p style="font-size:10px;color:var(--accent);background:#EFF6FF;border-radius:6px;padding:8px 12px;margin-top:10px;margin-bottom:0">⚠ All client-facing emails and documents will show the From Name and From Email above. The group's name and logo will appear on all IO PDFs and correspondence — never any 44i branding.</p>
@@ -3605,9 +3626,6 @@ ${intakeDesc}`;
 
 // ── ADMIN AUTH ─────────────────────────────────────────────────
 const ADMIN_USERS = {
-  'carol':  { email:'carol@44idigital.com',  pw:'carol44i'   },
-  'peggy':  { email:'peggy@44idigital.com',  pw:'peggy44i'   },
-  'darren': { email:'darren@44i.com',        pw:'darren44i'  },
   'jon':    { email:'jon@44idigital.com',    pw:'jon44i'     },
   'james':  { email:'james@44idigital.com',  pw:'james44i'   },
 };
@@ -3659,10 +3677,7 @@ function autoSlug(name) {
     slugField.value = slug;
     if (preview) preview.textContent = slug || '...';
     // Auto-fill portal domain if not already set
-    const portalField = document.getElementById('admin-portal-domain');
-    if (portalField && !portalField.dataset.manuallyEdited) {
-      portalField.value = BASE_PORTAL_DOMAIN;
-    }
+
   }
 }
 
@@ -3674,8 +3689,7 @@ function regenerateSlug() {
   const slug = generateSlug(name);
   slugField.value = slug;
   if (preview) preview.textContent = slug || '...';
-  const portalField = document.getElementById('admin-portal-domain');
-  if (portalField) { portalField.value = BASE_PORTAL_DOMAIN; portalField.dataset.manuallyEdited = ''; }
+
 }
 
 // ── PRICEABLE SERVICES (non-programmatic, non-SEM) ────────────
@@ -3884,14 +3898,18 @@ function renderAdminGroups() {
 function adminNewGroup() {
   document.getElementById('admin-form-title').textContent = 'New Group';
   document.getElementById('admin-group-id').value = '';
-  ['admin-name','admin-slug','admin-am-name','admin-am-email','admin-logo','admin-trello','admin-portal-domain','admin-from-name','admin-from-email','admin-color-hex'].forEach(id => {
+  ['admin-name','admin-slug','admin-am-name','admin-am-email','admin-am-calendar','admin-am-trello',
+   'admin-logo','admin-trello','admin-from-name','admin-from-email','admin-color-hex',
+   'admin-color2-hex','admin-io-recipient'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('admin-color').value = '#1C9BD7';
   document.getElementById('admin-color-hex').value = '#1C9BD7';
+  document.getElementById('admin-color2').value = '#1C9BD7';
+  document.getElementById('admin-color2-hex').value = '#1C9BD7';
+  document.getElementById('admin-has-koc').value = 'true';
   const sf = document.getElementById('admin-slug'); if(sf) { sf.dataset.manuallyEdited=''; }
   const sp = document.getElementById('slug-preview'); if(sp) sp.textContent = '...';
-  const pf = document.getElementById('admin-portal-domain'); if(pf) { pf.value = BASE_PORTAL_DOMAIN; pf.dataset.manuallyEdited=''; }
   currentPricingOverrides = {};
   adminTab('info');
   document.getElementById('admin-group-form').style.display = 'block';
@@ -3910,13 +3928,18 @@ function adminEditGroup(id) {
   const sp2 = document.getElementById('slug-preview'); if(sp2) sp2.textContent = g.io_slug || '...';
   document.getElementById('admin-am-name').value = g.am_name || '';
   document.getElementById('admin-am-email').value = g.am_email || '';
+  document.getElementById('admin-am-calendar').value = g.am_calendar_url || '';
+  document.getElementById('admin-am-trello').value = g.am_trello_handle || '';
   document.getElementById('admin-color').value = g.brand_color || '#1C9BD7';
   document.getElementById('admin-color-hex').value = g.brand_color || '#1C9BD7';
+  document.getElementById('admin-color2').value = g.brand_color2 || '#1C9BD7';
+  document.getElementById('admin-color2-hex').value = g.brand_color2 || '';
   document.getElementById('admin-logo').value = g.logo_url || '';
   document.getElementById('admin-trello').value = g.trello_board_id || '';
-  document.getElementById('admin-portal-domain').value = g.portal_domain || '';
   document.getElementById('admin-from-name').value = g.from_name || '';
   document.getElementById('admin-from-email').value = g.from_email || '';
+  document.getElementById('admin-io-recipient').value = g.io_recipient || '';
+  document.getElementById('admin-has-koc').value = g.has_koc ? 'true' : 'false';
   // Load existing pricing overrides
   currentPricingOverrides = {};
   if (g.io_pricing) {
@@ -3925,7 +3948,6 @@ function adminEditGroup(id) {
       Object.assign(currentPricingOverrides, p);
     } catch(e) {}
   }
-  // Reset to Group Info tab
   adminTab('info');
   document.getElementById('admin-group-form').style.display = 'block';
   document.getElementById('admin-group-form').scrollIntoView({behavior:'smooth'});
@@ -3952,12 +3974,16 @@ async function adminSaveGroup() {
     io_slug: slug,
     am_name: document.getElementById('admin-am-name').value.trim(),
     am_email: document.getElementById('admin-am-email').value.trim(),
+    am_calendar_url: document.getElementById('admin-am-calendar').value.trim() || null,
+    am_trello_handle: document.getElementById('admin-am-trello').value.trim() || null,
     brand_color: document.getElementById('admin-color').value,
+    brand_color2: document.getElementById('admin-color2-hex').value.trim() || null,
     logo_url: document.getElementById('admin-logo').value.trim(),
     trello_board_id: document.getElementById('admin-trello').value.trim(),
-    portal_domain: document.getElementById('admin-portal-domain').value.trim(),
     from_name: fromName,
     from_email: fromEmail,
+    io_recipient: document.getElementById('admin-io-recipient').value.trim() || null,
+    has_koc: document.getElementById('admin-has-koc').value === 'true',
     io_pricing: Object.keys(currentPricingOverrides).length > 0 ? currentPricingOverrides : null,
   };
 
