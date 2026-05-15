@@ -1073,8 +1073,8 @@ textarea{resize:vertical;min-height:70px}
 <script>
 const BASE_URL = "https://io.yourdigitalgroupresources.com";
 const BASE_PORTAL_DOMAIN = "https://review.yourdigitalgroupresources.com";
-const SUPABASE_URL = "https://yrimyofhqekiuhwegdsg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_l9K0U3dJNLmu_x9fIqPVkw_jX8JRsLQ";
+const SUPABASE_URL = "https://emydtkhnespbxraiijkx.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVteWR0a2huZXNwYnhyYWlpamt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTA3NjUsImV4cCI6MjA5MzQ4Njc2NX0.vh_5f19z2cb4_NU0sEKAcPiiNXhQZp-61bBN7lqEKbI";
 const PROXY = SUPABASE_URL + "/functions/v1/claude-proxy";
 
 // ── KOC PRODUCT MAP ───────────────────────────────────────────
@@ -2660,10 +2660,10 @@ const SERVICE_DATA = {
   'wm-email':{'label':'Addl. Email Addresses','fee':0,'recurring':7,'section':'web-mo'},
   'wm-content':{'label':'Website Optional Content Support','fee':175,'recurring':null,'section':'web-mo'},
   // TLP
-  'tlp-bs':{'label':'Targeted Landing Pages — Business Starter','fee':0,'recurring':299,'section':'tlp'},
-  'tlp-bb':{'label':'Targeted Landing Pages — Business Builder','fee':0,'recurring':399,'section':'tlp'},
-  'tlp-bp':{'label':'Targeted Landing Pages — Business Pro','fee':0,'recurring':499,'section':'tlp'},
-  'tlp-custom':{'label':'Targeted Landing Pages — Custom','fee':0,'recurring':0,'section':'tlp'},
+  'tlp-bs':{'label':'Targeted Landing Pages — Business Starter','fee':0,'recurring':299,'section':'tlp','workflow':'Targeted Landing Pages'},
+  'tlp-bb':{'label':'Targeted Landing Pages — Business Builder','fee':0,'recurring':399,'section':'tlp','workflow':'Targeted Landing Pages'},
+  'tlp-bp':{'label':'Targeted Landing Pages — Business Pro','fee':0,'recurring':499,'section':'tlp','workflow':'Targeted Landing Pages'},
+  'tlp-custom':{'label':'Targeted Landing Pages — Custom','fee':0,'recurring':0,'section':'tlp','workflow':'Targeted Landing Pages'},
   'tlp-design':{'label':'TLP Design Change','fee':99,'recurring':null,'section':'tlp'},
   // Social Media
   'sm-bs':{'label':'Social Media — Business Starter','fee':0,'recurring':575,'section':'sm','workflow':'Social Media Management'},
@@ -3264,7 +3264,7 @@ async function submitIO() {
       campaign_notes: document.getElementById('campaign-notes').value,
       koc_date: kocDate || null,
       koc_time: kocTime || null,
-      needs_koc: needsKoc,
+      needs_koc: kocIsRequired(),
       total_onetime: oneTime,
       total_monthly: monthly,
       signer_name: document.getElementById('auth-name').value,
