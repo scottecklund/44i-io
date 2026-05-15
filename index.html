@@ -195,14 +195,17 @@ textarea{resize:vertical;min-height:70px}
           <h3 style="color:#111;margin-bottom:8px">Invalid Link</h3>
           <p style="color:var(--muted);font-size:13px">This form link is not valid. Please contact your account manager for the correct link.</p>
         </div>
-        <div>
-          <label class="lbl">Digital Account Executive</label>
-          <input type="text" id="ae-name" placeholder="AE full name"/>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label class="lbl">Digital Account Executive</label>
+            <input type="text" id="ae-name" placeholder="AE full name"/>
+          </div>
+          <div>
+            <label class="lbl">AE Trello Handle <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— e.g. @johndoe</span></label>
+            <input type="text" id="ae-trello" placeholder="@trellohandle"/>
+          </div>
         </div>
-        <div>
-          <label class="lbl">AE Trello Handle <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— e.g. @johndoe</span></label>
-          <input type="text" id="ae-trello" placeholder="@trellohandle"/>
-        </div>
+      </div>
       </div>
     </div>
 
