@@ -3778,18 +3778,12 @@ function onPriceInput(serviceId, val) {
 let allGroups = [];
 
 function showAdmin(show) {
-  ['page-1','page-2','page-3','page-success'].forEach(p => {
-    const el = document.getElementById(p);
-    if (el) el.style.display = 'none';
-  });
+  const wrap = document.querySelector('.wrap');
+  if (wrap) wrap.style.display = show ? 'none' : 'block';
   document.getElementById('page-admin').style.display = show ? 'block' : 'none';
-  document.getElementById('steps-nav') && (document.getElementById('steps-nav').style.display = show ? 'none' : 'flex');
   if (show) loadAdminGroups();
   else {
-    // Restore current step
-    document.getElementById('page-' + currentStep).style.display = 'block';
-    const stepsEl = document.querySelector('.steps');
-    if (stepsEl) stepsEl.style.display = 'flex';
+    if (wrap) wrap.style.display = 'block';
   }
 }
 
