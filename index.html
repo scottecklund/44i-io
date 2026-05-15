@@ -735,15 +735,48 @@ textarea{resize:vertical;min-height:70px}
       </div>
     </div>
 
-    <!-- KOC Scheduling card (shown when KOC products selected) -->
-    <div class="card" id="koc-card" style="display:none">
-      <div class="card-head"><h3>📅 Kick-Off Call Scheduling</h3></div>
+    <!-- KOC Scheduling card — shown when KOC required, cannot be dismissed -->
+    <div class="card" id="koc-card" style="display:none;border:2px solid #FED7AA">
+      <div class="card-head" style="background:#FFF7ED"><h3 style="color:#92400E">📅 Kick-Off Call Required</h3></div>
       <div style="padding:18px">
-        <div id="koc-products-list" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
-        <div id="koc-step3-display">
-          <!-- Populated by updateKocCard() -->
+        <div id="koc-products-list" style="font-size:12px;color:#92400E;margin-bottom:16px;font-weight:600"></div>
+
+        <!-- Hero: calendar link -->
+        <div id="koc-calendar-link-row" style="display:none;margin-bottom:16px">
+          <a id="koc-calendar-link" href="#" target="_blank"
+            style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--accent);color:#fff;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+            📅 Open <span id="koc-am-cal-name">AM</span>'s Calendar to Schedule →
+          </a>
+          <p style="font-size:11px;color:var(--muted);margin-top:10px">A confirmation will be sent to you and the client once booked.</p>
         </div>
-        <div id="koc-am-info" style="font-size:12px;color:var(--muted);padding:10px 12px;background:var(--light);border-radius:7px;margin-top:10px"></div>
+
+        <!-- Secondary: enter date/time once booked -->
+        <div style="background:var(--light);border-radius:10px;padding:14px 16px">
+          <p style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Once booked — enter the date &amp; time below</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label class="lbl">KOC Date <span style="color:#EF4444">*</span></label>
+              <input type="date" id="koc-date" oninput="onKocDateChange()"/>
+            </div>
+            <div>
+              <label class="lbl">KOC Time <span style="color:#EF4444">*</span></label>
+              <select id="koc-time" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px">
+                <option value="">Select time...</option>
+                <option value="7:00 AM">7:00 AM</option><option value="7:30 AM">7:30 AM</option>
+                <option value="8:00 AM">8:00 AM</option><option value="8:30 AM">8:30 AM</option>
+                <option value="9:00 AM">9:00 AM</option><option value="9:30 AM">9:30 AM</option>
+                <option value="10:00 AM">10:00 AM</option><option value="10:30 AM">10:30 AM</option>
+                <option value="11:00 AM">11:00 AM</option><option value="11:30 AM">11:30 AM</option>
+                <option value="12:00 PM">12:00 PM</option><option value="12:30 PM">12:30 PM</option>
+                <option value="1:00 PM">1:00 PM</option><option value="1:30 PM">1:30 PM</option>
+                <option value="2:00 PM">2:00 PM</option><option value="2:30 PM">2:30 PM</option>
+                <option value="3:00 PM">3:00 PM</option><option value="3:30 PM">3:30 PM</option>
+                <option value="4:00 PM">4:00 PM</option><option value="4:30 PM">4:30 PM</option>
+                <option value="5:00 PM">5:00 PM</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -966,21 +999,20 @@ textarea{resize:vertical;min-height:70px}
 
 
 
-<!-- INTAKE FORM MODAL -->
-<div id="intake-modal" class="modal-backdrop" style="display:none">
-  <div class="modal-box">
+<!-- INTAKE FORM MODAL — no X, no cancel, no backdrop dismiss -->
+<div id="intake-modal" class="modal-backdrop" style="display:none" onclick="intakeBackdropClick(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-header">
       <div>
         <h3 id="intake-modal-title">Campaign Intake Form</h3>
         <div class="modal-product" id="intake-modal-product"></div>
       </div>
-      <button onclick="closeIntakeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1">✕</button>
     </div>
     <div class="modal-body" id="intake-modal-body"></div>
     <div class="modal-footer">
       <div id="intake-modal-footer-left"></div>
       <div style="display:flex;gap:10px">
-        <button class="btn btn-secondary" onclick="closeIntakeModal()">Cancel</button>
+        <button class="btn btn-secondary" id="intake-help-btn" onclick="bypassIntakeFromFooter()">✋ Need AM Help</button>
         <button class="btn btn-primary" id="intake-save-btn" onclick="saveIntakeForm()">Save Intake Info</button>
       </div>
     </div>
@@ -1069,9 +1101,9 @@ const PRODUCT_CONFIG = {
   'tlp-bb':     { koc:'required', intake:'tlp',          label:'Targeted Landing Pages — Builder' },
   'tlp-bp':     { koc:'required', intake:'tlp',          label:'Targeted Landing Pages — Pro' },
   // Social Media — KOC required, no AE intake
-  'sm-bs':      { koc:'required', intake:null,           label:'Social Media — Starter' },
-  'sm-bb':      { koc:'required', intake:null,           label:'Social Media — Builder' },
-  'sm-bp':      { koc:'required', intake:null,           label:'Social Media — Pro' },
+  'sm-bs':      { koc:'required', intake:'sm',           label:'Social Media — Starter' },
+  'sm-bb':      { koc:'required', intake:'sm',           label:'Social Media — Builder' },
+  'sm-bp':      { koc:'required', intake:'sm',           label:'Social Media — Pro' },
   // Email Marketing — KOC required + AE intake
   'em-bb-2500': { koc:'required', intake:'email',        label:'Email Marketing — Builder <2,500' },
   'em-bb-5000': { koc:'required', intake:'email',        label:'Email Marketing — Builder <5,000' },
@@ -1166,6 +1198,37 @@ const INTAKE_FORMS = {
         { key:'business_description', label:'Describe your business', type:'textarea', required:true },
         { key:'desired_action', label:'What action do you want recipients to take?', type:'textarea', required:true },
         { key:'content_focus', label:'Specific content to focus on?', type:'textarea' },
+      ]},
+    ]
+  },
+  sm: {
+    title: 'Social Media Management Intake',
+    kocForm: true,
+    sections: [
+      { title: 'Pre-Call Information', fields: [
+        { key:'website_url',        label:'Website URL',              type:'text' },
+        { key:'primary_channel',    label:'Primary Channel',          type:'radio', options:['Facebook','Instagram','LinkedIn','X','TikTok','Pinterest'] },
+        { key:'secondary_channel',  label:'Secondary Channel (if any)',type:'text' },
+        { key:'has_gbp',            label:'Google Business Profile',  type:'radio', options:['Already set up','Need set up'] },
+      ]},
+      { title: 'Suggested Post Types', fields: [
+        { key:'post_types', label:'Select post types to focus on', type:'textarea' },
+      ]},
+      { title: 'During Call / Goals', fields: [
+        { key:'social_goals',       label:'Current social media goals',           type:'textarea' },
+        { key:'target_audience',    label:'Target audience',                      type:'textarea' },
+        { key:'has_content',        label:'Do you have content (photos/video)?',  type:'radio', options:['Yes — will provide','No'] },
+        { key:'content_to_avoid',   label:'Post types or imagery to avoid',       type:'textarea' },
+        { key:'keywords_hashtags',  label:'Keywords / hashtags / taglines',       type:'textarea' },
+        { key:'cta',                label:'Preferred call-to-action',             type:'text' },
+        { key:'additional_notes',   label:'Additional notes / comments',          type:'textarea' },
+      ]},
+      { title: 'SMM Pro — Social Ads (if applicable)', fields: [
+        { key:'ad_format',          label:'Carousel or video ad?',                type:'radio', options:['Carousel','Video'] },
+        { key:'ad_content',         label:'Content available for ads?',           type:'textarea' },
+        { key:'ad_unique_topics',   label:'Unique topics for carousel',           type:'textarea' },
+        { key:'ad_target',          label:'Target location and audience',         type:'textarea' },
+        { key:'ad_messaging',       label:'Ad messaging / call to action',        type:'textarea' },
       ]},
     ]
   },
@@ -2067,196 +2130,244 @@ function closeIntakeModal() {
 }
 
 // ── KOC CARD ──────────────────────────────────────────────────
-function syncKocDate(val) { document.getElementById('koc-date').value = val; }
-function syncKocTime(val) { document.getElementById('koc-time').value = val; }
 
-function rescheduleKoc() {
-  globalKocSchedule = null;
-  document.getElementById('koc-date').value = '';
-  document.getElementById('koc-time').value = '';
-  updateKocRowBadges();
-  updateKocCard();
-  showToast(`📅 Opening ${selectedGroup?.am_name || 'AM'}'s calendar — book a new time then enter the details in the modal`);
+
+
+function onKocDateChange() {
+  // Just a hook for future use
 }
 
-function updateKocRowBadges() {
-  document.querySelectorAll('.koc-row-badge').forEach(el => el.remove());
-  if (!globalKocSchedule?.date) return;
-  const [y,m,d] = globalKocSchedule.date.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}${globalKocSchedule.time ? ' · ' + globalKocSchedule.time : ''}`;
-  Object.keys(selected).forEach(id => {
-    if (PRODUCT_CONFIG[id]?.koc !== 'required') return;
-    const row = document.querySelector(`tr[data-id="${id}"]`);
-    if (!row) return;
-    const nameTd = row.querySelector('td:nth-child(2)');
-    if (!nameTd || nameTd.querySelector('.koc-row-badge')) return;
-    const badge = document.createElement('span');
-    badge.className = 'koc-row-badge';
-    badge.textContent = `📅 ${pretty}`;
-    badge.style.cssText = 'margin-left:8px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;color:#166534;background:#DCFCE7;white-space:nowrap';
-    nameTd.appendChild(badge);
-  });
-}
-
-function openKocModal(serviceId) {
-  const cfg = PRODUCT_CONFIG[serviceId];
-  const amName = selectedGroup?.am_name || 'your Account Manager';
-  const calUrl = selectedGroup?.am_calendar_url;
-  const label = cfg?.label || serviceId;
-
-  if (globalKocSchedule?.date) {
-    const [y,m,d] = globalKocSchedule.date.split('-');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}${globalKocSchedule.time ? ' · ' + globalKocSchedule.time : ''}`;
-    showToast(`📅 KOC already scheduled: ${pretty} — this product will be covered`);
-    // If this product has an intake, open it
-    if (cfg?.intake) {
-      const existing = intakeData[cfg.intake];
-      const notStarted = !existing || (!existing.completed && !existing.bypassed && (!existing.fields || Object.keys(existing.fields).length === 0));
-      if (notStarted) setTimeout(() => openIntakeForService(serviceId), 300);
+function kocIsRequired() {
+  // Returns true if any selected product requires a KOC
+  return Object.keys(selected).some(id => {
+    const cfg = PRODUCT_CONFIG[id];
+    if (!cfg) return false;
+    if (cfg.koc === 'required') return true;
+    // koc:none but intake not fully saved
+    if (cfg.koc === 'none' && cfg.intake) {
+      const d = intakeData[cfg.intake];
+      if (!d || (!d.completed && !d.bypassed)) return true;
+      if (d.bypassed) return true;
     }
-    return;
-  }
-
-  document.getElementById('intake-modal-title').textContent = 'Kick-Off Call Required';
-  document.getElementById('intake-modal-product').textContent = label;
-  document.getElementById('intake-modal-body').innerHTML = `
-    <div style="text-align:center;padding:24px 16px">
-      <div style="font-size:40px;margin-bottom:14px">📅</div>
-      <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;max-width:360px;margin-left:auto;margin-right:auto">
-        <strong>${label}</strong> requires a Kick-Off Call with ${amName}.<br>
-        Use the calendar below to schedule — a confirmation will be sent to you and the client.
-      </p>
-      ${calUrl ? `
-        <a href="${calUrl}" target="_blank"
-          onmousedown="unlockKocSave('__koc_only__')"
-          style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--accent);color:#fff;border-radius:40px;font-size:13px;font-weight:700;text-decoration:none;margin-bottom:24px;box-shadow:0 4px 12px rgba(0,0,0,.12)">
-          📅 Open ${amName}'s Calendar →
-        </a>` : `<p style="font-size:12px;color:var(--muted);margin-bottom:20px">Contact ${amName} directly to schedule.</p>`}
-      <div id="koc-modal-footer-msg" style="font-size:11px;color:var(--muted)">Open the calendar above to schedule, then click Done.</div>
-    </div>`;
-  document.getElementById('intake-modal-footer-left').innerHTML = '';
-  const saveBtn = document.getElementById('intake-save-btn');
-  if (saveBtn) {
-    // If no calendar URL, auto-unlock so AE can still proceed
-    const alreadyOpened = !!intakeData['__koc_only__']?.kocCalendarOpened;
-    const autoUnlock = !calUrl;
-    saveBtn.textContent = 'Done';
-    saveBtn.style.display = '';
-    saveBtn.disabled = !alreadyOpened && !autoUnlock;
-    saveBtn.style.opacity = (alreadyOpened || autoUnlock) ? '' : '0.4';
-    saveBtn.style.cursor = (alreadyOpened || autoUnlock) ? '' : 'not-allowed';
-    saveBtn.onclick = () => {
-      saveBtn.textContent = 'Save Intake Info';
-      saveBtn.onclick = saveIntakeForm;
-      closeIntakeModal();
-      const cfg = PRODUCT_CONFIG[serviceId];
-      if (cfg?.intake) {
-        const existing = intakeData[cfg.intake];
-        const notStarted = !existing || (!existing.completed && !existing.bypassed && (!existing.fields || Object.keys(existing.fields).length === 0));
-        if (notStarted) setTimeout(() => openIntakeForService(serviceId), 200);
-      }
-    };
-  }
-  currentIntakeServiceId = serviceId;
-  document.getElementById('intake-modal').style.display = 'flex';
-}
-
-function skipIntakeModal() {
-  const sid = currentIntakeServiceId;
-  if (sid) {
-    const cfg = PRODUCT_CONFIG[sid];
-    showToast(`⚠ ${cfg?.label || 'This product'} needs a KOC scheduled before submission`);
-  }
-  closeIntakeModal();
-}
-
-function skipHostingModal() {
-  showToast('⚠ Hosting not confirmed — you can set this before submitting');
-  closeHostingModal();
+    return false;
+  });
 }
 
 function updateKocCard() {
-  const kocProducts = Object.keys(selected).filter(id => PRODUCT_CONFIG[id]?.koc === 'required');
   const card = document.getElementById('koc-card');
-  if (!kocProducts.length || !selectedGroup?.has_koc) { card.style.display = 'none'; return; }
+  const needsKoc = kocIsRequired();
+  if (!needsKoc || !selectedGroup?.has_koc) { card.style.display = 'none'; return; }
   card.style.display = 'block';
-  document.getElementById('koc-products-list').innerHTML =
-    `<strong>KOC required for:</strong> ${kocProducts.map(id => PRODUCT_CONFIG[id]?.label||id).join(', ')}`;
+
   const amName = selectedGroup?.am_name || 'your Account Manager';
   const calUrl = selectedGroup?.am_calendar_url;
-  const display = document.getElementById('koc-step3-display');
-  const amInfo = document.getElementById('koc-am-info');
-  amInfo.textContent = `Kick-off call will be placed on ${amName}'s calendar. An invite will be sent to the client and AE.`;
-  if (globalKocSchedule?.date) {
-    const [y,m,d] = globalKocSchedule.date.split('-');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const pretty = `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}${globalKocSchedule.time ? ' · ' + globalKocSchedule.time : ''}`;
-    display.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 18px">
-        <div>
-          <p style="font-size:11px;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📅 Kick-Off Call Scheduled</p>
-          <p style="font-size:16px;font-weight:700;color:#1E40AF;margin:0">${pretty} with ${amName}</p>
-        </div>
-        ${calUrl ? `<a href="${calUrl}" target="_blank" onmousedown="rescheduleKoc()"
-          style="font-size:12px;font-weight:600;color:#3B82F6;text-decoration:none;white-space:nowrap;padding:6px 12px;border:1px solid #BFDBFE;border-radius:7px;background:#fff">
-          🔄 Reschedule →
-        </a>` : ''}
+
+  // Situation A: products that always require a KOC regardless of intake
+  const alwaysKoc = Object.keys(selected).filter(id => PRODUCT_CONFIG[id]?.koc === 'required');
+
+  // Situation B: koc:none products whose intake is incomplete/bypassed/not started
+  const incompleteIntakeForms = [];
+  Object.keys(selected).forEach(id => {
+    const cfg = PRODUCT_CONFIG[id];
+    if (!cfg || cfg.koc !== 'none' || !cfg.intake) return;
+    const d = intakeData[cfg.intake];
+    if (!d || (!d.completed && !d.bypassed) || d.bypassed) {
+      // Only add form once even if multiple products share it
+      const formDef = INTAKE_FORMS[cfg.intake];
+      const label = formDef?.title || cfg.intake;
+      if (!incompleteIntakeForms.find(f => f.key === cfg.intake)) {
+        incompleteIntakeForms.push({ key: cfg.intake, label, sampleId: id, bypassed: d?.bypassed });
+      }
+    }
+  });
+
+  let html = '';
+
+  // Situation A block
+  if (alwaysKoc.length > 0) {
+    html += `
+      <div style="margin-bottom:14px">
+        <p style="font-size:12px;font-weight:700;color:#92400E;margin-bottom:6px">📅 Kick-Off Call required for:</p>
+        <ul style="margin:0;padding-left:18px;font-size:12px;color:#92400E">
+          ${alwaysKoc.map(id => `<li>${PRODUCT_CONFIG[id]?.label || id}</li>`).join('')}
+        </ul>
       </div>`;
+  }
+
+  // Situation B block — just explain, no duplicate buttons (forms card below handles it)
+  if (incompleteIntakeForms.length > 0) {
+    html += `
+      <div style="margin-bottom:14px;${alwaysKoc.length ? 'padding-top:12px;border-top:1px solid #FED7AA;' : ''}">
+        <p style="font-size:12px;font-weight:700;color:#92400E;margin-bottom:4px">📋 KOC required — incomplete intake form${incompleteIntakeForms.length > 1 ? 's' : ''}:</p>
+        <ul style="margin:0 0 6px 18px;font-size:12px;color:#92400E">
+          ${incompleteIntakeForms.map(f => `<li>${f.label}${f.bypassed ? ' <em style="font-size:10px">(AM help requested)</em>' : ''}</li>`).join('')}
+        </ul>
+        <p style="font-size:11px;color:var(--muted)">Complete the intake form${incompleteIntakeForms.length > 1 ? 's' : ''} in the <strong>Campaign Intake Forms</strong> card below to eliminate this requirement, or schedule the call now.</p>
+      </div>`;
+  }
+
+  document.getElementById('koc-products-list').innerHTML = html;
+
+  // Calendar link — hero button
+  const linkRow = document.getElementById('koc-calendar-link-row');
+  if (calUrl) {
+    document.getElementById('koc-calendar-link').href = calUrl;
+    document.getElementById('koc-am-cal-name').textContent = amName;
+    linkRow.style.display = 'block';
   } else {
-    display.innerHTML = `
-      <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:16px;text-align:center">
-        <p style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:8px">⚠ Kick-Off Call Not Yet Scheduled</p>
-        <p style="font-size:12px;color:#92400E;margin-bottom:14px">You must schedule a KOC with ${amName} before submitting.</p>
-        ${calUrl ? `<a href="${calUrl}" target="_blank"
-          onmousedown="openKocModal(Object.keys(selected).find(id=>PRODUCT_CONFIG[id]?.koc==='required'))"
-          style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--accent);color:#fff;border-radius:20px;font-size:13px;font-weight:700;text-decoration:none">
-          📅 Open ${amName}'s Calendar →
-        </a>` : `<p style="font-size:12px;color:#92400E">Contact ${amName} directly to schedule.</p>`}
-      </div>`;
+    linkRow.style.display = 'none';
   }
 }
 
-// ── INTAKE STATUS CARD ────────────────────────────────────────
-function updateIntakeStatusCard() {
-  const needed = {};
-  Object.keys(selected).forEach(id => {
-    const cfg = PRODUCT_CONFIG[id];
-    if (cfg?.intake) { if (!needed[cfg.intake]) needed[cfg.intake] = { labels:[], sampleId:id }; needed[cfg.intake].labels.push(cfg.label); }
-  });
-  const card = document.getElementById('intake-status-card');
-  const list = document.getElementById('intake-status-list');
-  if (!Object.keys(needed).length) { card.style.display = 'none'; return; }
-  card.style.display = 'block';
-  let html = '';
-  Object.entries(needed).forEach(([formKey, {labels, sampleId}]) => {
-    const data = intakeData[formKey];
-    const formDef = INTAKE_FORMS[formKey];
-    let badge, action;
-    if (data?.bypassed) {
-      badge = `<span class="intake-required-badge">✋ AM Help</span>`;
-      action = `<button class="btn-open-intake" onclick="openIntakeForService('${sampleId}')">View</button>`;
-    } else if (data?.completed) {
-      badge = `<span class="intake-done-badge">✓ Complete</span>`;
-      action = `<button class="btn-open-intake" style="background:var(--light);color:var(--text);border:1px solid var(--border)" onclick="openIntakeForService('${sampleId}', true)">Edit</button>`;
-    } else if (data?.fields) {
-      badge = `<span class="intake-required-badge">⚠ Incomplete</span>`;
-      action = `<button class="btn-open-intake" onclick="openIntakeForService('${sampleId}')">Complete</button>`;
-    } else {
-      badge = `<span class="intake-required-badge">Required</span>`;
-      action = `<button class="btn-open-intake" onclick="openIntakeForService('${sampleId}')">Fill Out</button>`;
-    }
-    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div><div style="font-size:13px;font-weight:600">${formDef?.title||formKey}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">${labels.join(', ')}</div></div>
-      <div style="display:flex;align-items:center;gap:8px">${badge}${action}</div></div>`;
-  });
-  list.innerHTML = html;
-  updateIntakeRowLinks();
+// ── INTAKE MODAL ──────────────────────────────────────────────
+
+function intakeBackdropClick(e) {
+  // Backdrop click does nothing — modal cannot be dismissed this way
+  e.stopPropagation();
 }
 
-// Adds a small "📋 Edit Intake" link directly on each service table row
+function bypassIntakeFromFooter() {
+  // Called from the "Need AM Help" button in the modal footer
+  const sid = currentIntakeServiceId;
+  if (!sid) return;
+  const cfg = PRODUCT_CONFIG[sid];
+  if (!cfg?.intake) return;
+  intakeData[cfg.intake] = { bypassed: true, bypassNote: '', fields: {} };
+  closeIntakeModal();
+  updateIntakeStatusCard();
+  showToast('✋ AM help requested — KOC will be required');
+}
+
+function openIntakeForService(serviceId, forceEdit) {
+  const cfg = PRODUCT_CONFIG[serviceId];
+  if (!cfg || !cfg.intake) return;
+  const formDef = INTAKE_FORMS[cfg.intake];
+  if (!formDef) return;
+  currentIntakeServiceId = serviceId;
+
+  document.getElementById('intake-modal-title').textContent = formDef.title;
+  document.getElementById('intake-modal-product').textContent = cfg.label;
+
+  const existing = intakeData[cfg.intake] || {};
+
+  // If already bypassed — show bypass screen (view only, can undo)
+  if (existing.bypassed && !forceEdit) {
+    const amName = selectedGroup?.am_name || 'your AM';
+    document.getElementById('intake-modal-body').innerHTML = `
+      <div style="text-align:center;padding:32px 24px">
+        <div style="font-size:48px;margin-bottom:16px">✋</div>
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:10px;color:var(--text)">AM Help Requested</h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px;max-width:380px;margin-left:auto;margin-right:auto">
+          ${amName} will cover this intake on the kick-off call.
+        </p>
+        <button onclick="removeBypass('${cfg.intake}')"
+          style="padding:10px 22px;border-radius:8px;background:var(--light);color:var(--text);border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+          ✏️ Fill out form instead
+        </button>
+      </div>`;
+    document.getElementById('intake-modal-footer-left').innerHTML = '';
+    document.getElementById('intake-help-btn').style.display = 'none';
+    document.getElementById('intake-save-btn').style.display = 'none';
+    document.getElementById('intake-modal').style.display = 'flex';
+    return;
+  }
+
+  // Show full form
+  showFullIntakeForm(serviceId, cfg, formDef, existing);
+  document.getElementById('intake-modal').style.display = 'flex';
+}
+
+function removeBypass(formKey) {
+  if (intakeData[formKey]) delete intakeData[formKey];
+  const sid = currentIntakeServiceId;
+  closeIntakeModal();
+  setTimeout(() => openIntakeForService(sid, true), 100);
+}
+
+function showFullIntakeForm(serviceId, cfg, formDef, existing) {
+  const isKoc = cfg.koc === 'required';
+  let html = '';
+
+  // KOC notice at top for required products
+  if (isKoc) {
+    html += `
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <p style="font-size:13px;font-weight:700;color:#1E40AF;margin-bottom:4px">📅 Kick-Off Call Required</p>
+        <p style="font-size:12px;color:#3B82F6;margin:0">Fill out what you can — ${selectedGroup?.am_name || 'your AM'} will cover the rest on the Kick-Off Call.</p>
+      </div>`;
+  }
+
+  // Form sections
+  formDef.sections.forEach(section => {
+    html += `<div class="modal-section"><div class="modal-section-title">${section.title}</div><div class="modal-grid">`;
+    section.fields.forEach(field => {
+      const val = existing.fields?.[field.key] || '';
+      if (field.type === 'textarea') {
+        html += `<div class="modal-field" style="grid-column:1/-1"><label>${field.label}</label><textarea data-key="${field.key}" data-form="${cfg.intake}" rows="3">${val}</textarea></div>`;
+      } else if (field.type === 'radio') {
+        const opts = field.options.map(o =>
+          `<label><input type="radio" name="intake-${cfg.intake}-${field.key}" value="${o}" ${val===o?'checked':''}/> ${o}</label>`
+        ).join('');
+        html += `<div class="modal-field"><label>${field.label}</label><div class="radio-group">${opts}</div></div>`;
+      } else {
+        html += `<div class="modal-field"><label>${field.label}</label><input type="${field.type}" data-key="${field.key}" data-form="${cfg.intake}" value="${(val||'').replace(/"/g,'&quot;')}"/></div>`;
+      }
+    });
+    html += '</div></div>';
+  });
+
+  document.getElementById('intake-modal-body').innerHTML = html;
+  document.getElementById('intake-modal-footer-left').innerHTML = '';
+  document.getElementById('intake-help-btn').style.display = '';
+  document.getElementById('intake-save-btn').style.display = '';
+  document.getElementById('intake-save-btn').disabled = false;
+  document.getElementById('intake-save-btn').style.opacity = '';
+}
+
+function saveIntakeForm() {
+  const sid = currentIntakeServiceId;
+  const formKey = PRODUCT_CONFIG[sid]?.intake;
+  if (!formKey) { closeIntakeModal(); return; }
+  const formDef = INTAKE_FORMS[formKey];
+
+  const fields = {};
+  formDef.sections.forEach(section => {
+    section.fields.forEach(field => {
+      let val = '';
+      if (field.type === 'radio') {
+        const checked = document.querySelector(`input[name="intake-${formKey}-${field.key}"]:checked`);
+        val = checked ? checked.value : '';
+      } else {
+        const el = document.querySelector(`[data-key="${field.key}"][data-form="${formKey}"]`);
+        val = el ? el.value.trim() : '';
+      }
+      fields[field.key] = val;
+    });
+  });
+
+  // Check if fully completed (all fields have values) or partial
+  const allFields = formDef.sections.flatMap(s => s.fields);
+  const filledCount = allFields.filter(f => fields[f.key]).length;
+  const isComplete = filledCount === allFields.length;
+
+  intakeData[formKey] = {
+    fields,
+    completed: isComplete,
+    partial: !isComplete && filledCount > 0,
+    savedAt: new Date().toISOString()
+  };
+
+  updateIntakeStatusCard();
+  closeIntakeModal();
+  showToast(isComplete ? '✓ Intake form saved' : '✓ Intake form saved (partial)');
+}
+
+function closeIntakeModal() {
+  document.getElementById('intake-modal').style.display = 'none';
+  currentIntakeServiceId = null;
+}
+
+// // Adds a small "📋 Edit Intake" link directly on each service table row
 // that has a saved or bypassed intake form — so AE can edit without scrolling up
 function updateIntakeRowLinks() {
   // Clear all existing row links first
@@ -2299,6 +2410,46 @@ function updateIntakeRowLinks() {
     link.style.cssText = `margin-left:6px;padding:3px 9px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;${style}`;
     nameTd.appendChild(link);
   });
+}
+
+function updateIntakeStatusCard() {
+  const needed = {};
+  Object.keys(selected).forEach(id => {
+    const cfg = PRODUCT_CONFIG[id];
+    if (cfg?.intake) {
+      if (!needed[cfg.intake]) needed[cfg.intake] = { labels:[], sampleId:id };
+      needed[cfg.intake].labels.push(cfg.label);
+    }
+  });
+  const card = document.getElementById('intake-status-card');
+  const list = document.getElementById('intake-status-list');
+  if (!Object.keys(needed).length) { card.style.display = 'none'; updateIntakeRowLinks(); return; }
+  card.style.display = 'block';
+  let html = '';
+  Object.entries(needed).forEach(([formKey, {labels, sampleId}]) => {
+    const data = intakeData[formKey];
+    const formDef = INTAKE_FORMS[formKey];
+    let badge, action;
+    if (data?.bypassed) {
+      badge = `<span class="intake-required-badge">✋ AM Help</span>`;
+      action = `<button class="btn-open-intake" onclick="openIntakeForService('${sampleId}')">View</button>`;
+    } else if (data?.completed) {
+      badge = `<span class="intake-done-badge">✓ Complete</span>`;
+      action = `<button class="btn-open-intake" style="background:var(--light);color:var(--text);border:1px solid var(--border)" onclick="openIntakeForService('${sampleId}', true)">Edit</button>`;
+    } else if (data?.partial) {
+      badge = `<span class="intake-required-badge">⚠ Partial</span>`;
+      action = `<button class="btn-open-intake" onclick="openIntakeForService('${sampleId}', true)">Edit</button>`;
+    } else {
+      badge = `<span class="intake-required-badge">Not Started</span>`;
+      action = `<button class="btn-open-intake" onclick="openIntakeForService('${sampleId}')">Fill Out</button>`;
+    }
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-size:13px;font-weight:600">${formDef?.title||formKey}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${labels.join(', ')}</div></div>
+      <div style="display:flex;align-items:center;gap:8px">${badge}${action}</div></div>`;
+  });
+  list.innerHTML = html;
+  updateIntakeRowLinks();
 }
 
 async function loadGroup() {
@@ -2619,7 +2770,7 @@ function toggle(cb, id) {
     selected[id] = {...data, notes: '', spend: 0};
     row.classList.add('selected');
 
-    // ── Website OTO ↔ MRR mutual exclusivity ──────────────────
+    // Website OTO ↔ MRR mutual exclusivity
     if (WEB_OTO.includes(id)) {
       setWebSectionDisabled('web-mo', true);
       setVidGroupDisabled('wm-vid-pkg', true);
@@ -2629,48 +2780,28 @@ function toggle(cb, id) {
       setVidGroupDisabled('vid-pkg', true);
       setVidGroupDisabled('wm-vid-pkg', false);
     }
-    // ──────────────────────────────────────────────────────────
-    const cfg = PRODUCT_CONFIG[id];
-    if (cfg) {
-      const isKoc = cfg.koc === 'required';
-      const hasIntake = !!cfg.intake;
-      const triggersHosting = ['w-bs','w-bb','w-bp','w-custom'].includes(id);
 
-      if (isKoc) {
-        if (triggersHosting) {
-          window._pendingKocServiceId = id;
-        } else if (!globalKocSchedule) {
-          setTimeout(() => openKocModal(id), 300);
-        } else {
-          if (hasIntake) {
-            const existing = intakeData[cfg.intake];
-            const notStarted = !existing || (!existing.completed && !existing.bypassed && (!existing.fields || Object.keys(existing.fields).length === 0));
-            if (notStarted) setTimeout(() => openIntakeForService(id), 300);
-          }
-        }
-      } else if (hasIntake) {
-        const existing = intakeData[cfg.intake];
-        const notStarted = !existing || (!existing.completed && !existing.bypassed && (!existing.fields || Object.keys(existing.fields).length === 0));
-        if (notStarted) setTimeout(() => openIntakeForService(id), 300);
-      }
+    // Open intake form if this product has one
+    const cfg = PRODUCT_CONFIG[id];
+    if (cfg?.intake) {
+      setTimeout(() => openIntakeForService(id), 200);
     }
+
   } else {
     delete selected[id];
     row.classList.remove('selected');
     delete hostingChoices[id];
-    window._pendingIntakeServiceId = null;
-    window._pendingKocServiceId = null;
 
-    // If no other selected products use this form key, clear intake so reselect re-prompts
+    // Clear intake data when unchecked so reselect re-prompts
     const cfg = PRODUCT_CONFIG[id];
     if (cfg?.intake) {
-      const formKey = cfg.intake;
       const stillNeeded = Object.keys(selected).some(otherId =>
-        PRODUCT_CONFIG[otherId]?.intake === formKey
+        PRODUCT_CONFIG[otherId]?.intake === cfg.intake
       );
-      if (!stillNeeded) delete intakeData[formKey];
+      if (!stillNeeded) delete intakeData[cfg.intake];
     }
-    // Re-enable opposite section when all selections in this section are gone
+
+    // Re-enable opposite section
     if (WEB_OTO.includes(id) && !WEB_OTO.some(x => selected[x])) {
       setWebSectionDisabled('web-mo', false);
       setVidGroupDisabled('wm-vid-pkg', false);
@@ -2679,10 +2810,10 @@ function toggle(cb, id) {
       setWebSectionDisabled('web-ot', false);
       setVidGroupDisabled('vid-pkg', false);
     }
-    updateKocRowBadges();
   }
   updateBadges();
-  updateIntakeStatusCard(); // updates row intake buttons immediately on check/uncheck
+  updateIntakeStatusCard();
+  updateKocCard();
 }
 
 // ── SPEND MINIMUMS per service ID ────────────────────────────
@@ -2866,30 +2997,22 @@ function updateBadges() {
 // ── STEP NAVIGATION ───────────────────────────────────────────
 function goStep(n) {
   if (n === 3) {
-    // Check required intakes not yet completed and not bypassed
-    const incomplete = [];
-    const needed = {};
-    Object.keys(selected).forEach(id => {
-      const cfg = PRODUCT_CONFIG[id];
-      if (cfg?.intake) needed[cfg.intake] = cfg.label;
-    });
-    Object.entries(needed).forEach(([formKey, label]) => {
-      const d = intakeData[formKey];
-      if (!d || (!d.completed && !d.bypassed)) incomplete.push(label);
-    });
-    if (incomplete.length > 0) {
-      const proceed = confirm(`The following intake forms have not been completed:\n\n• ${incomplete.join('\n• ')}\n\nYou can still proceed — you\'ll see them on the review page. Continue?`);
-      if (!proceed) return;
-    }
     const missingSpend = Object.entries(selected).filter(([id,d]) => (d.cpm || d.cpc) && !d.spend);
     if (missingSpend.length > 0) {
-      const names = missingSpend.map(([,d]) => d.label.split('\u2014')[1]?.trim() || d.label).join(', ');
+      const names = missingSpend.map(([,d]) => d.label.split('—')[1]?.trim() || d.label).join(', ');
       if (!confirm('No campaign spend entered for: ' + names + '.\n\nContinue anyway?')) return;
     }
     buildReview();
     updateKocCard();
     updateIntakeStatusCard();
     setTimeout(initCanvas, 100);
+    // Scroll to KOC card if it's visible and not filled
+    setTimeout(() => {
+      const kocCard = document.getElementById('koc-card');
+      if (kocCard && kocCard.style.display !== 'none' && !document.getElementById('koc-date').value) {
+        kocCard.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+    }, 300);
   }
   document.getElementById('page-1').style.display = n === 1 ? 'block' : 'none';
   document.getElementById('page-2').style.display = n === 2 ? 'block' : 'none';
@@ -2962,7 +3085,7 @@ function buildReview() {
     ['City', document.getElementById('city').value || '—'],
     ['AE', document.getElementById('ae-name').value || '—'],
     ['Campaign Notes', document.getElementById('campaign-notes').value || '—'],
-    ['KOC', (document.getElementById('koc-date').value||'') + ' ' + (document.getElementById('koc-time').value||'')],
+    ['KOC', [document.getElementById('koc-date').value, document.getElementById('koc-time').value].filter(Boolean).join(' at ') || '—'],
     ['Campaign Length', (document.getElementById('campaign-length').value ? document.getElementById('campaign-length').value + ' Months' : '—')],
     ['Campaign Start', document.getElementById('campaign-start').value || '—'],
     ['Campaign End', document.getElementById('campaign-end').value || '—'],
@@ -3067,21 +3190,16 @@ async function submitIO() {
     const bizName = document.getElementById('biz-name').value.trim();
     if (!bizName) throw new Error('Business name is required');
 
-    // KOC date/time is collected during intake or Step 3 — not required to block submission
     const kocDate = document.getElementById('koc-date')?.value || '';
     const kocTime = document.getElementById('koc-time')?.value || '';
 
-    // Check for incomplete required intakes (non-bypassed)
-    const incompleteIntakes = [];
-    const needed = {};
-    Object.keys(selected).forEach(id => { const cfg = PRODUCT_CONFIG[id]; if (cfg?.intake) needed[cfg.intake] = cfg.label; });
-    Object.entries(needed).forEach(([formKey, label]) => {
-      const d = intakeData[formKey];
-      if (!d || (!d.completed && !d.bypassed)) incompleteIntakes.push(label);
-    });
-    if (incompleteIntakes.length > 0) {
-      const proceed = confirm(`These intake forms are not yet complete:\n\n• ${incompleteIntakes.join('\n• ')}\n\nSubmit anyway? The AM will be notified to follow up.`);
-      if (!proceed) { btn.innerHTML = '✓ Submit Insertion Order'; btn.disabled = false; return; }
+    // Hard block if KOC required but not scheduled
+    if (kocIsRequired() && selectedGroup?.has_koc && !kocDate) {
+      showToast('Please schedule a Kick-Off Call date before submitting', 'error');
+      btn.innerHTML = '✓ Submit Insertion Order'; btn.disabled = false;
+      // Scroll to KOC card
+      document.getElementById('koc-card')?.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
     }
 
     // Determine tier from social media selection
