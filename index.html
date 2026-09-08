@@ -7905,7 +7905,20 @@ async function generateIntakePdfBlob(workflowName, html) {
       </head><body style="margin:0">${html}</body></html>`);
     iframe.contentDocument.close();
 
-    await new Promise(resolve => setTimeout(resolve, 700));
+    // Wait for any images (and webfonts) to actually finish loading before capturing,
+    // instead of a blind fixed delay — same "wait for load/error, capped" pattern
+    // printIO() already uses for the browser print path (2026-09-08, per Claire: a
+    // real emailed IO PDF froze the group logo as a broken-image icon, because
+    // html2canvas snapshotted before a slow-loading image had finished).
+    {
+      const imgs = Array.from(iframe.contentDocument.images);
+      const imgsReady = imgs.length
+        ? Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; })))
+        : Promise.resolve();
+      const fontsReady = iframe.contentDocument.fonts?.ready || Promise.resolve();
+      const timeoutFallback = new Promise(res => setTimeout(res, 3000));
+      await Promise.race([Promise.all([imgsReady, fontsReady]), timeoutFallback]);
+    }
 
     const canvas = await html2canvas(iframe.contentDocument.body, {
       scale: 1.5,
@@ -7953,9 +7966,22 @@ async function generateIoPdfBlob() {
     iframe.contentDocument.write(html);
     iframe.contentDocument.close();
 
-    // Give web fonts / the group logo image time to load before capturing — a capture
-    // taken too early would silently freeze in system-font/broken-image state.
-    await new Promise(resolve => setTimeout(resolve, 700));
+    // Wait for the group logo image (and webfonts) to actually finish loading before
+    // capturing, instead of a blind fixed delay — the exact bug found live 2026-09-08
+    // (Claire: a real emailed IO PDF showed the 44i logo as a broken-image icon,
+    // permanently frozen into the screenshot because html2canvas ran before the logo
+    // had finished loading). Same "wait for load/error, capped" pattern printIO()
+    // already uses for the browser print path — that fix never touched this
+    // completely separate html2canvas capture path.
+    {
+      const imgs = Array.from(iframe.contentDocument.images);
+      const imgsReady = imgs.length
+        ? Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; })))
+        : Promise.resolve();
+      const fontsReady = iframe.contentDocument.fonts?.ready || Promise.resolve();
+      const timeoutFallback = new Promise(res => setTimeout(res, 3000));
+      await Promise.race([Promise.all([imgsReady, fontsReady]), timeoutFallback]);
+    }
 
     // scale 1.5 (not 2) + JPEG (not PNG) — a full-page PNG at scale 2 produced a base64
     // payload large enough to blow past the Edge Function's memory limit (HTTP 546) when

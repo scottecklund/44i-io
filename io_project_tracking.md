@@ -25681,3 +25681,51 @@ expects to check back next week). Both the code (`reset-password.html` +
 all three portals' `redirectTo`) and the Supabase Dashboard settings are
 believed correct and just need one successful real end-to-end run to
 confirm.
+
+## Broken 44i logo icon in a real emailed IO PDF (2026-09-08)
+
+Claire shared a real IO PDF (attached from Gmail) where the logo in the
+letterhead had rendered as a plain broken-image icon instead of the
+group's real logo.
+
+**Root cause**: `generateIoPdfBlob()` (the function that builds the PDF
+attached to the confirmation email and to Trello) renders the IO into a
+hidden iframe, then waits a **blind fixed 700ms** before calling
+`html2canvas` to screenshot it — with a comment claiming this gives "web
+fonts / the group logo image time to load." It doesn't check whether the
+image has actually finished loading at all; if the logo took longer than
+700ms (slow network, cold CDN, brief hiccup — nothing wrong with the
+group's logo URL itself), `html2canvas` would screenshot the DOM mid-load
+and permanently freeze a broken-image icon into the generated PDF's raster
+image. This is a real, separate code path from `printIO()`'s own
+`window.print()` flow, which already got the correct fix for this exact
+failure mode back on 2026-08-14 (waits for each image's real `load`/`error`
+event, capped at 3000ms so a truly broken URL can't hang forever) — that
+fix never touched this one since they don't share code.
+
+**Found the identical blind-700ms pattern in 3 more places** while
+checking for it: `generateIntakePdfBlob()` in `index.html`, and both PDF
+generators in `admin/index.html` (the AM-side revised-IO PDF and its
+intake-form sibling) — all four use the same html2canvas-capture
+approach and were all equally vulnerable, even though only two of them
+(`generateIoPdfBlob()` and the admin revised-IO one) actually render a
+logo image at all.
+
+**Fix**: replaced the blind 700ms wait in all four functions with the
+same real "wait for every image's load/error event, capped at 3000ms as
+a fallback" logic `printIO()` already uses correctly — copy-pasted
+identically since it's the exact same requirement in a different capture
+path.
+
+**Verified**: `node -e (new Function(...))` syntax check on both files —
+no errors. Extracted the old-vs-new wait logic into a standalone Node
+harness simulating a slow-loading image (1500ms — slower than the old
+700ms wait, faster than the new 3000ms cap): confirmed the OLD logic
+returns after 701ms with the image still incomplete (exactly the bug
+reported — would screenshot broken), the NEW logic correctly waits the
+full 1500ms until the image is actually loaded, and an image that never
+fires `load`/`error` at all still resolves via the 3000ms fallback cap
+rather than hanging the PDF generation forever. Not independently
+re-tested against a real live PDF generation (would need Claire to
+submit or trigger a real IO and check the resulting PDF) — the harness
+proves the timing logic itself is correct, not the full render pipeline.
