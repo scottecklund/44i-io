@@ -6231,10 +6231,26 @@ async function submitIO() {
         // campaign_lines.tactic_label) when set, so a reused service name (e.g. one of
         // the 12 "Business Pro" tiers) reads disambiguated here too, not just in the
         // Accounting Map/Strategist Portal.
+        // Matches the exact sentence calcProration() generates (see that function) --
+        // used below to pull the hosting-proration explanation back OUT of li.notes
+        // for display, since it's stored merged into that one string (`[data.notes,
+        // hosting?.note].join(' | ')`) rather than as its own field. Display-only:
+        // doesn't touch how the data is stored, so every other place that reads
+        // li.notes (Order Detail, the printed IO, admin's revised-IO PDF) is
+        // unaffected.
+        const HOSTING_NOTE_RE = /Hosting starts ([^(]+?)\s*\(\d+ days from IO\)\.\s*Prorated:\s*\$[\d,.]+\s*\((\d+) days remaining in year\)/;
+
+        // Reformatted 2026-09-15, per Claire ("a little wordy... how can we make this
+        // easier to read?") -- one line per field (Price/Flight/Notes) instead of
+        // everything strung together with "|", and the hosting proration stated once
+        // (folded into Price) instead of showing up as its own field AND again inside
+        // Notes. Same information as before, just arranged as a scannable list instead
+        // of a run-on paragraph -- see the approved mockup in io_project_tracking.md.
         const servicesDesc = lineItems.map(li => {
-          let line = `• ${li.accounting_label || li.label}`;
-          if (li.fee > 0) line += ` — $${li.fee.toLocaleString()} one-time`;
-          if (li.recurring > 0) line += ` — $${li.recurring.toLocaleString()}/mo`;
+          const lines = [`• **${li.accounting_label || li.label}**`];
+          const priceParts = [];
+          if (li.fee > 0) priceParts.push(`$${li.fee.toLocaleString()} one-time`);
+          if (li.recurring > 0) priceParts.push(`$${li.recurring.toLocaleString()}/mo`);
           // Whole-campaign-total/custom-by-month figures need the same real-
           // campaign-total fix as formatSiblingLineItems() below (2026-08-28,
           // per Claire) -- li.spend here is always the AVERAGE of a varying
@@ -6247,27 +6263,38 @@ async function submitIO() {
           if (li.spend > 0) {
             if (monthsVary) {
               const total = li.month_budgets.reduce((s, m) => s + (Number(m.amount) || 0), 0);
-              line += ` — $${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} total campaign spend`;
+              priceParts.push(`$${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} total campaign spend`);
             } else {
-              line += ` — $${li.spend.toLocaleString()}/mo spend`;
+              priceParts.push(`$${li.spend.toLocaleString()}/mo spend`);
             }
           }
-          if (li.prorated_hosting_amt) line += ` | Prorated: $${li.prorated_hosting_amt.toFixed(2)}`;
+          let priceLine = priceParts.join(', ');
+          if (li.prorated_hosting_amt) {
+            const hostingMatch = HOSTING_NOTE_RE.exec(li.notes || '');
+            priceLine += hostingMatch
+              ? ` (prorated to $${li.prorated_hosting_amt.toFixed(2)} — hosting starts ${hostingMatch[1].trim()}, ${hostingMatch[2]} days left in the year)`
+              : ` (prorated to $${li.prorated_hosting_amt.toFixed(2)})`;
+          }
+          if (priceLine) lines.push(`   Price: ${priceLine}`);
           if (li.start_date || li.end_date) {
             const isOneTime = CATALOG_ROWS[li.service_id]?.billing_type === 'one_time';
-            line += isOneTime
-              ? ` | Flight: ${li.start_date || '—'}`
-              : ` | Flight: ${li.start_date || '—'} to ${li.end_date || 'Ongoing'}`;
+            lines.push(isOneTime
+              ? `   Flight: ${li.start_date || '—'}`
+              : `   Flight: ${li.start_date || '—'} to ${li.end_date || 'Ongoing'}`);
           }
           if (monthsVary) {
             li.month_budgets.forEach(m => {
               const label = new Date(m.month + '-01T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-              line += `\n   – ${label}: $${Number(m.amount).toLocaleString()}${m.paused ? ' (paused)' : ''}`;
+              lines.push(`     – ${label}: $${Number(m.amount).toLocaleString()}${m.paused ? ' (paused)' : ''}`);
             });
           }
-          if (li.notes) line += `\n  Notes: ${li.notes}`;
-          return line;
-        }).join('\n');
+          // Strip the auto-generated hosting sentence back out (now folded into Price
+          // above) before showing the rest as Notes -- leaves just what the AE actually
+          // typed, or nothing at all if the only "note" was ever the hosting sentence.
+          const humanNote = (li.notes || '').replace(HOSTING_NOTE_RE, '').split('|').map(s => s.trim()).filter(Boolean).join(' | ');
+          if (humanNote) lines.push(`   Notes: ${humanNote}`);
+          return lines.join('\n');
+        }).join('\n\n');
 
         const ioDesc = `**IO #:** ${ioNumber}
 **Client:** ${bizName}

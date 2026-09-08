@@ -25742,3 +25742,54 @@ successfully set a new password. This closes out the last open piece of
 the 2026-09-04 auth migration session — every stage through Stage 3 is
 now fully built and live-confirmed across all three portals, including
 the password-reset flow.
+
+## New-order Trello comment reformatted for readability (2026-09-15)
+
+Claire flagged a real comment (IO #20260908-ABCPOO-6R5) as "a little
+wordy" — each service's price, prorated hosting amount, flight dates, and
+notes were all strung together on one line with "|" separators, and for
+a service with hosting proration, the amount showed up TWICE: once as its
+own `| Prorated: $129.45` field, and again inside the auto-generated
+hosting explanation sentence merged into that line's Notes.
+
+Built a side-by-side mockup as an Artifact (real content from her
+screenshot on one side, a reformatted version on the other) before
+touching any code, per her request to see it first — she approved it
+before implementation.
+
+**Fix**: reformatted `servicesDesc` (the builder for the "New order
+submitted" Trello comment) so each service gets its own indented
+Price/Flight/Notes lines instead of one "|"-joined string, and the
+hosting proration is stated once — folded into the Price line — instead
+of twice. The tricky part: the hosting-proration sentence isn't stored as
+its own field on a line item, it's merged directly into `notes`
+(`[data.notes, hosting?.note].filter(Boolean).join(' | ')`, set at order-
+build time) — so extracting it back out for display meant matching the
+exact sentence shape `calcProration()` always generates via a regex
+(`HOSTING_NOTE_RE`), pulling the start date and days-remaining out of it,
+and stripping it from what's shown under Notes so only the AE's own
+typed text remains there. Deliberately display-only — doesn't touch how
+`notes` is stored, so every other place that reads it (Order Detail, the
+printed IO, admin's revised-IO PDF) is completely unaffected by this
+change.
+
+**Verified**: `node -e (new Function(...))` syntax check — no errors.
+Extracted the reformatted builder into a standalone Node harness and ran
+it against Claire's exact real line items (reproduced the IO #...6R5
+comment verbatim) — output matches the approved mockup exactly. Also
+tested 3 edge cases not shown in the mockup: a line whose only "note" was
+ever the auto-generated hosting sentence (correctly shows no Notes line
+at all, rather than an empty one), a line with no notes and no proration
+at all (unaffected, unchanged from before), and a month-by-month varying
+campaign with a real note (correctly keeps its per-month breakdown lines
+nested under the item and its Notes line intact).
+
+**Not yet applied elsewhere**: two other Trello comment builders exist
+with the same "|"-joined-line pattern —
+`formatSiblingLineItems()` (used when a sibling workflow gets added to an
+existing order) and one inline builder around line 6829 (a similar
+"New order submitted" comment for a different submission path). Both
+would have the identical wordiness/duplication issue for any line item
+with hosting proration. Flagged for Claire rather than changed
+silently — worth a follow-up if she wants the same treatment applied
+there for consistency.
