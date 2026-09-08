@@ -25729,3 +25729,16 @@ rather than hanging the PDF generation forever. Not independently
 re-tested against a real live PDF generation (would need Claire to
 submit or trigger a real IO and check the resulting PDF) — the harness
 proves the timing logic itself is correct, not the full render pipeline.
+**Still pending live confirmation** — Claire will test this the same day
+she confirmed the password reset fix below.
+
+## Password reset — confirmed working end to end (2026-09-15)
+
+Claire tested the real flow a week after the rate limit blocked the
+first attempt: requested a fresh reset email, clicked the link, and
+landed on the actual `reset-password.html` "Set New Password" page (not
+the blank homepage/"Invalid Link" error from the first attempt) and
+successfully set a new password. This closes out the last open piece of
+the 2026-09-04 auth migration session — every stage through Stage 3 is
+now fully built and live-confirmed across all three portals, including
+the password-reset flow.
