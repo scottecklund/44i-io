@@ -25651,3 +25651,170 @@ these portals are ever used on a genuinely shared machine.
 portal files — no errors. Not yet live-tested (needs Claire to sign in
 via the new login, refresh the page, and confirm she's still logged in
 instead of being prompted again).
+
+## Password reset — Supabase Dashboard config confirmed correct, testing paused on rate limit (2026-09-04)
+
+First live test failed: the reset email's link landed on the bare
+`io.yourdigitalgroupresources.com` homepage instead of
+`/reset-password.html`, showing the public IO form's own "Invalid Link
+— contact your account manager" message (unrelated to password reset —
+just what `index.html` shows for any unrecognized link). Root-caused:
+Supabase validates a reset link's `redirectTo` against the project's
+Redirect URLs allow-list **at click time**, not at send time. The
+sequence was: Site URL got updated to the real production domain first,
+Claire tested (redirected to the bare domain — expected, since the
+specific `/reset-password.html` entry wasn't in the allow-list yet), and
+only afterward was that entry added. Claire then confirmed via
+screenshot that both settings are now correct: Site URL =
+`https://io.yourdigitalgroupresources.com`, Redirect URLs contains
+`https://io.yourdigitalgroupresources.com/reset-password.html`.
+
+The original test link's token was already consumed by that first click
+regardless of where it redirected (these are one-time-use), so a retry
+needed a fresh email — but requesting one immediately hit Supabase's own
+built-in rate limit on how often the same account can request a
+password-reset email ("Could not send a reset email. Check the address
+and try again."). This is expected platform throttling, not a bug on
+our end — nothing left to fix in the code or Supabase config right now.
+**Paused here**: Claire will retry once the rate limit clears (she
+expects to check back next week). Both the code (`reset-password.html` +
+all three portals' `redirectTo`) and the Supabase Dashboard settings are
+believed correct and just need one successful real end-to-end run to
+confirm.
+
+## Broken 44i logo icon in a real emailed IO PDF (2026-09-08)
+
+Claire shared a real IO PDF (attached from Gmail) where the logo in the
+letterhead had rendered as a plain broken-image icon instead of the
+group's real logo.
+
+**Root cause**: `generateIoPdfBlob()` (the function that builds the PDF
+attached to the confirmation email and to Trello) renders the IO into a
+hidden iframe, then waits a **blind fixed 700ms** before calling
+`html2canvas` to screenshot it — with a comment claiming this gives "web
+fonts / the group logo image time to load." It doesn't check whether the
+image has actually finished loading at all; if the logo took longer than
+700ms (slow network, cold CDN, brief hiccup — nothing wrong with the
+group's logo URL itself), `html2canvas` would screenshot the DOM mid-load
+and permanently freeze a broken-image icon into the generated PDF's raster
+image. This is a real, separate code path from `printIO()`'s own
+`window.print()` flow, which already got the correct fix for this exact
+failure mode back on 2026-08-14 (waits for each image's real `load`/`error`
+event, capped at 3000ms so a truly broken URL can't hang forever) — that
+fix never touched this one since they don't share code.
+
+**Found the identical blind-700ms pattern in 3 more places** while
+checking for it: `generateIntakePdfBlob()` in `index.html`, and both PDF
+generators in `admin/index.html` (the AM-side revised-IO PDF and its
+intake-form sibling) — all four use the same html2canvas-capture
+approach and were all equally vulnerable, even though only two of them
+(`generateIoPdfBlob()` and the admin revised-IO one) actually render a
+logo image at all.
+
+**Fix**: replaced the blind 700ms wait in all four functions with the
+same real "wait for every image's load/error event, capped at 3000ms as
+a fallback" logic `printIO()` already uses correctly — copy-pasted
+identically since it's the exact same requirement in a different capture
+path.
+
+**Verified**: `node -e (new Function(...))` syntax check on both files —
+no errors. Extracted the old-vs-new wait logic into a standalone Node
+harness simulating a slow-loading image (1500ms — slower than the old
+700ms wait, faster than the new 3000ms cap): confirmed the OLD logic
+returns after 701ms with the image still incomplete (exactly the bug
+reported — would screenshot broken), the NEW logic correctly waits the
+full 1500ms until the image is actually loaded, and an image that never
+fires `load`/`error` at all still resolves via the 3000ms fallback cap
+rather than hanging the PDF generation forever. Not independently
+re-tested against a real live PDF generation (would need Claire to
+submit or trigger a real IO and check the resulting PDF) — the harness
+proves the timing logic itself is correct, not the full render pipeline.
+**Still pending live confirmation** — Claire will test this the same day
+she confirmed the password reset fix below.
+
+## Password reset — confirmed working end to end (2026-09-15)
+
+Claire tested the real flow a week after the rate limit blocked the
+first attempt: requested a fresh reset email, clicked the link, and
+landed on the actual `reset-password.html` "Set New Password" page (not
+the blank homepage/"Invalid Link" error from the first attempt) and
+successfully set a new password. This closes out the last open piece of
+the 2026-09-04 auth migration session — every stage through Stage 3 is
+now fully built and live-confirmed across all three portals, including
+the password-reset flow.
+
+## New-order Trello comment reformatted for readability (2026-09-15)
+
+Claire flagged a real comment (IO #20260908-ABCPOO-6R5) as "a little
+wordy" — each service's price, prorated hosting amount, flight dates, and
+notes were all strung together on one line with "|" separators, and for
+a service with hosting proration, the amount showed up TWICE: once as its
+own `| Prorated: $129.45` field, and again inside the auto-generated
+hosting explanation sentence merged into that line's Notes.
+
+Built a side-by-side mockup as an Artifact (real content from her
+screenshot on one side, a reformatted version on the other) before
+touching any code, per her request to see it first — she approved it
+before implementation.
+
+**Fix**: reformatted `servicesDesc` (the builder for the "New order
+submitted" Trello comment) so each service gets its own indented
+Price/Flight/Notes lines instead of one "|"-joined string, and the
+hosting proration is stated once — folded into the Price line — instead
+of twice. The tricky part: the hosting-proration sentence isn't stored as
+its own field on a line item, it's merged directly into `notes`
+(`[data.notes, hosting?.note].filter(Boolean).join(' | ')`, set at order-
+build time) — so extracting it back out for display meant matching the
+exact sentence shape `calcProration()` always generates via a regex
+(`HOSTING_NOTE_RE`), pulling the start date and days-remaining out of it,
+and stripping it from what's shown under Notes so only the AE's own
+typed text remains there. Deliberately display-only — doesn't touch how
+`notes` is stored, so every other place that reads it (Order Detail, the
+printed IO, admin's revised-IO PDF) is completely unaffected by this
+change.
+
+**Verified**: `node -e (new Function(...))` syntax check — no errors.
+Extracted the reformatted builder into a standalone Node harness and ran
+it against Claire's exact real line items (reproduced the IO #...6R5
+comment verbatim) — output matches the approved mockup exactly. Also
+tested 3 edge cases not shown in the mockup: a line whose only "note" was
+ever the auto-generated hosting sentence (correctly shows no Notes line
+at all, rather than an empty one), a line with no notes and no proration
+at all (unaffected, unchanged from before), and a month-by-month varying
+campaign with a real note (correctly keeps its per-month breakdown lines
+nested under the item and its Notes line intact).
+
+**Not yet applied elsewhere**: two other Trello comment builders exist
+with the same "|"-joined-line pattern —
+`formatSiblingLineItems()` (used when a sibling workflow gets added to an
+existing order) and one inline builder around line 6829 (a similar
+"New order submitted" comment for a different submission path). Both
+would have the identical wordiness/duplication issue for any line item
+with hosting proration. Flagged for Claire rather than changed
+silently — worth a follow-up if she wants the same treatment applied
+there for consistency.
+
+**Follow-up, same day**: Claire asked "This will show for comments on
+all cards? Should we update the descriptions to match as well?" —
+clarified the actual scope: a card's comment and its own persistent
+Description field are always built from the SAME function (`ioDesc`
+embeds `servicesDesc` directly for the IO card; `finalizeTacticCard()`
+feeds `formatSiblingLineItems()`'s output into both `postOrderComment()`
+and the card's `desc` for every tactic card) — so there's no such thing
+as "fix the comment, separately fix the description," fixing one
+function always fixes both at once. The IO card already got both for
+free from the earlier fix. Applied the identical one-line-per-field
+reformat to `formatSiblingLineItems()` too (this one never had the
+hosting-proration duplication bug — it doesn't reference `notes` or
+`prorated_hosting_amt` at all — but was reformatted anyway for
+consistency, since it builds the comment AND description on every real
+tactic card in the system). Left the third builder (the multi-agent/
+county-split card description, `descLines` around line 6825) alone —
+checked it and it's already a single clean line per service
+(`• label — $X/mo (start – end)`), genuinely different shape with
+nothing to fix.
+
+**Verified**: `node -e (new Function(...))` syntax check — no errors.
+Extracted `formatSiblingLineItems()` into a standalone Node harness with
+a flat-rate example and a varying month-by-month example — both render
+correctly in the new format.
