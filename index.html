@@ -5990,13 +5990,18 @@ async function submitIO() {
         // which each only ever produce ONE card per workflow — a whole-LIST template (e.g.
         // SEO's multi-card copy) has no single obvious card to put this on, so it's
         // deliberately left off those for now, pending a decision on where it'd go there.
+        // Reformatted 2026-09-15, per Claire — same "one line per field, easier to
+        // scan" treatment as servicesDesc() above, kept consistent since this
+        // builds both a Trello comment AND that same card's persistent Description
+        // (see finalizeTacticCard() below — one function feeds both).
         function formatSiblingLineItems(originalWorkflow) {
           const siblings = lineItems.filter(li => li.workflow === originalWorkflow);
           if (!siblings.length) return '';
           const lines = siblings.map(li => {
-            let line = `• ${li.label}`;
-            if (li.fee > 0) line += ` — $${li.fee.toLocaleString()} one-time`;
-            if (li.recurring > 0) line += ` — $${li.recurring.toLocaleString()}/mo`;
+            const itemLines = [`• **${li.label}**`];
+            const priceParts = [];
+            if (li.fee > 0) priceParts.push(`$${li.fee.toLocaleString()} one-time`);
+            if (li.recurring > 0) priceParts.push(`$${li.recurring.toLocaleString()}/mo`);
             // Real per-month breakdown on the Trello card too (2026-08-20) --
             // same consistency principle as Review/Print: li.spend is always
             // the AVERAGE, which read as a real flat rate to whoever's
@@ -6011,19 +6016,20 @@ async function submitIO() {
             if (li.spend > 0) {
               if (monthsVary) {
                 const total = li.month_budgets.reduce((s, m) => s + (Number(m.amount) || 0), 0);
-                line += ` — $${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} total campaign spend`;
+                priceParts.push(`$${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} total campaign spend`);
               } else {
-                line += ` — $${li.spend.toLocaleString()}/mo spend`;
+                priceParts.push(`$${li.spend.toLocaleString()}/mo spend`);
               }
             }
+            if (priceParts.length) itemLines.push(`   Price: ${priceParts.join(', ')}`);
             if (monthsVary) {
               li.month_budgets.forEach(m => {
                 const label = new Date(m.month + '-01T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                line += `\n   – ${label}: $${Number(m.amount).toLocaleString()}${m.paused ? ' (paused)' : ''}`;
+                itemLines.push(`     – ${label}: $${Number(m.amount).toLocaleString()}${m.paused ? ' (paused)' : ''}`);
               });
             }
-            return line;
-          }).join('\n');
+            return itemLines.join('\n');
+          }).join('\n\n');
           return `**Services sold under this workflow:**\n${lines}`;
         }
 

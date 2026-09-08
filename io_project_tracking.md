@@ -25793,3 +25793,28 @@ would have the identical wordiness/duplication issue for any line item
 with hosting proration. Flagged for Claire rather than changed
 silently — worth a follow-up if she wants the same treatment applied
 there for consistency.
+
+**Follow-up, same day**: Claire asked "This will show for comments on
+all cards? Should we update the descriptions to match as well?" —
+clarified the actual scope: a card's comment and its own persistent
+Description field are always built from the SAME function (`ioDesc`
+embeds `servicesDesc` directly for the IO card; `finalizeTacticCard()`
+feeds `formatSiblingLineItems()`'s output into both `postOrderComment()`
+and the card's `desc` for every tactic card) — so there's no such thing
+as "fix the comment, separately fix the description," fixing one
+function always fixes both at once. The IO card already got both for
+free from the earlier fix. Applied the identical one-line-per-field
+reformat to `formatSiblingLineItems()` too (this one never had the
+hosting-proration duplication bug — it doesn't reference `notes` or
+`prorated_hosting_amt` at all — but was reformatted anyway for
+consistency, since it builds the comment AND description on every real
+tactic card in the system). Left the third builder (the multi-agent/
+county-split card description, `descLines` around line 6825) alone —
+checked it and it's already a single clean line per service
+(`• label — $X/mo (start – end)`), genuinely different shape with
+nothing to fix.
+
+**Verified**: `node -e (new Function(...))` syntax check — no errors.
+Extracted `formatSiblingLineItems()` into a standalone Node harness with
+a flat-rate example and a varying month-by-month example — both render
+correctly in the new format.
